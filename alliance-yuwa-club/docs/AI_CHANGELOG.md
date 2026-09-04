@@ -143,6 +143,7 @@ Related Documentation:
 - API.md
 - DEVELOPMENT.md
 
+
 5. Line Number Requirement
 
 AI agents should record the relevant file and approximate line range for
@@ -180,6 +181,14 @@ Performance-related changes.
 Deployment-related code changes.
 Major UI components.
 New form-processing logic.
+Old color.
+New color.
+Reason.
+Components affected.
+Accessibility considerations.
+Whether the change was approved.
+
+
 7. What Usually Does Not Require a Separate Entry
 
 A separate entry is generally unnecessary for trivial changes such as:
@@ -606,3 +615,232 @@ AI agents must not silently expand the project's scope.
 
 When a possible improvement is not required by the current task, the
 agent should suggest it separately rather than implement it automatically.
+
+---
+
+## CHANGE-0001 — Establish Django Backend Foundation
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+feature / security
+
+Requirement:
+REQUIREMENTS.md §14 requires environment-managed secrets and explicit CORS.
+ARCHITECTURE.md §§2, 5, 12, and 13 require the documented Django apps,
+Django REST Framework, django-cors-headers, environment configuration, and
+local React development support. API.md §§1, 26, and 27 require the REST API
+foundation and explicit local CORS configuration.
+
+Reason:
+The generated Django project had none of the existing project apps registered,
+no REST or CORS configuration, a committed secret key, UTC timezone, or an API
+availability endpoint. The minimum backend foundation was needed before later
+documented models and APIs can be implemented.
+
+Files Changed:
+- backend/config/settings.py
+- backend/config/urls.py
+- backend/core/views.py
+- backend/core/tests.py
+- backend/requirements.txt
+
+Functions / Classes / Components:
+- get_list_setting()
+- health_check()
+- HealthCheckTests
+
+Code Location:
+- backend/config/settings.py: lines 13-40, 45-105, and 143-157
+- backend/config/urls.py: lines 17-30
+- backend/core/views.py: lines 1-10
+- backend/core/tests.py: lines 1-9
+- backend/requirements.txt: lines 1-3
+
+Implementation:
+Registered the seven existing Django apps, Django REST Framework, and
+django-cors-headers. Added explicit localhost Vite CORS defaults, Kathmandu
+timezone, local static/media paths, comma-separated environment settings, and
+a generated development-only key when DEBUG is enabled; non-debug runs require
+SECRET_KEY from the environment. Added GET /api/health/ returning
+{"status": "ok"}, with the endpoint explicitly public while DRF defaults to
+authenticated access. Added its minimal integration test.
+
+Why This Approach:
+Used Django and Python standard-library configuration instead of adding dotenv
+or a database URL parser. This keeps the foundation small, protects future API
+endpoints by default, and leaves production values to the hosting environment.
+
+Dependencies Added:
+- django-cors-headers==4.9.0 — required by ARCHITECTURE.md for explicitly
+  configured React-to-Django CORS.
+
+Database Changes:
+None. No models or migrations were added.
+
+API Changes:
+- Added public GET /api/health/ returning HTTP 200 and {"status": "ok"}.
+
+Tests:
+- HealthCheckTests.test_health_check_returns_ok
+
+Verification:
+- DEBUG=True python manage.py check — passed.
+- DEBUG=True python manage.py test — passed (1 test).
+- ruff check . — run; reports 31 pre-existing unused imports in untouched
+  generated app stubs and one import-order issue corrected in config/urls.py.
+- ruff check config core/views.py core/tests.py — passed.
+- ruff format --check . — run; reports pre-existing formatting in untouched
+  starter files and settings.py.
+
+Unnecessary Alternatives Considered:
+Did not add python-dotenv, django-environ, JWT authentication, pagination,
+models, migrations, extra Django apps, or React work. Those are not necessary
+for this initial foundation.
+
+Assumptions:
+- SQLite remains the intended local-development database, as ARCHITECTURE.md
+  permits it.
+- The local React development server uses localhost:5173 or 127.0.0.1:5173.
+- Production will provide SECRET_KEY, DEBUG, host, CORS, and CSRF values through
+  its environment.
+
+Related Documentation:
+- REQUIREMENTS.md
+- ARCHITECTURE.md
+- DATABASE.md
+- API.md
+- DEVELOPMENT.md
+
+---
+
+## CHANGE-0002 — Implement V1 Database Models and Django Admin
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+feature
+
+Requirement:
+DATABASE.md §§3-27 defines the 13 V1 entities, fields, relationships,
+publication/status rules, indexing, ordering, and deletion behavior.
+ARCHITECTURE.md §§4, 5, and 10 requires Django ORM and Django Admin for V1
+content management. DEVELOPMENT.md §§9 and 12 requires migrations and tests.
+
+Reason:
+The existing apps contained only Django starter stubs, so the documented
+database-backed content and administration foundation did not exist.
+
+Files Changed:
+- backend/core/models.py
+- backend/activities/models.py
+- backend/events/models.py
+- backend/news/models.py
+- backend/team/models.py
+- backend/memberships/models.py
+- backend/gallery/models.py
+- backend/contact/models.py
+- backend/*/admin.py
+- backend/*/tests.py
+- backend/*/migrations/0001_initial.py
+- backend/requirements.txt
+
+Models / Classes Changed:
+- Organization, Announcement
+- ActivityCategory, Activity, ActivityImage
+- Event, EventImage
+- NewsArticle
+- TeamMember
+- MembershipApplication
+- GalleryAlbum, GalleryImage
+- ContactMessage
+- Eight Django ModelAdmin classes and focused model test classes.
+
+Code Location:
+- backend/core/models.py: lines 4-50; backend/core/admin.py: lines 6-18
+- backend/activities/models.py: lines 4-64; backend/activities/admin.py: lines 6-30
+- backend/events/models.py: lines 4-52; backend/events/admin.py: lines 6-28
+- backend/news/models.py: lines 5-38; backend/news/admin.py: lines 6-13
+- backend/team/models.py: lines 4-20; backend/team/admin.py: lines 6-12
+- backend/memberships/models.py: lines 5-43; backend/memberships/admin.py: lines 6-19
+- backend/gallery/models.py: lines 4-34; backend/gallery/admin.py: lines 6-22
+- backend/contact/models.py: lines 4-31; backend/contact/admin.py: lines 6-12
+- backend/*/tests.py: lines 1-44
+- backend/*/migrations/0001_initial.py: generated initial migrations
+
+Implementation:
+Implemented only the 13 database models in their existing Django apps with
+documented fields, unique slugs, status/priority choices, timestamps, default
+ordering, documented query indexes, and media upload paths. Applied PROTECT
+for activity categories, CASCADE for image children, and SET_NULL for the two
+administrative User relationships. Registered all models in Django Admin with
+simple list, filter, search, ordering, slug, and timestamp support.
+
+Why This Approach:
+Used standard Django ORM, built-in User, ImageField, and ModelAdmin features.
+This matches the architecture without introducing custom base classes,
+services, managers, signals, or non-Django infrastructure.
+
+Dependencies Added:
+- Pillow==12.1.1 — approved dependency required by Django ImageField validation
+  for the documented logo, cover, photo, and gallery image fields.
+
+Database Changes:
+- Created eight initial migration files covering all 13 documented models.
+- Applied migrations to the local SQLite development database.
+
+API Changes:
+None. No public REST endpoints, serializers, or API views were added; the
+existing health-check endpoint was left unchanged.
+
+Frontend Changes:
+None.
+
+Tests:
+- Added focused model tests for creation/defaults, unique slugs, ordering,
+  PROTECT, CASCADE, and SET_NULL behavior.
+- Existing health-check test remains in the suite.
+
+Verification:
+- DEBUG=True python manage.py makemigrations — created eight initial migrations.
+- DEBUG=True python manage.py migrate — passed.
+- DEBUG=True python manage.py check — passed.
+- DEBUG=True python manage.py makemigrations --check — no changes detected.
+- DEBUG=True python manage.py migrate --plan — no pending operations.
+- DEBUG=True python manage.py test — passed (10 tests).
+- Focused ruff check with RUF012 excluded — passed. RUF012 is incompatible with
+  Django's required class-level model/admin metadata and generated migrations.
+- Focused ruff format --check — passed.
+
+Unnecessary Alternatives Considered:
+Did not add django-environ, a custom user model, serializers, REST endpoints,
+JWT, a React dashboard, image processing/storage services, abstract base
+models, signals, soft deletion, generic repository layers, or future member,
+ward, volunteer, and attendance models.
+
+Assumptions:
+- A single organization record is expected operationally; DATABASE.md does not
+  prescribe a singleton database constraint, so none was added.
+- Announcement is placed in core as global site content; DATABASE.md names the
+  model but does not prescribe an owning Django app.
+- Documented optional/unspecified text and image fields are blankable; required
+  fields remain required by Django model validation.
+- MembershipApplication.areas_of_interest is stored as text because DATABASE.md
+  specifies the field but not a structured storage format; API serialization is
+  intentionally deferred.
+
+Related Documentation:
+- REQUIREMENTS.md
+- ARCHITECTURE.md
+- DATABASE.md
+- API.md
+- DEVELOPMENT.md
+- DESIGN_SYSTEM.md
