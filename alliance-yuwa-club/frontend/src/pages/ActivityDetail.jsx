@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchActivity } from '../services/api'
 import { formatDate } from './contentUtils'
 import './ContentPages.css'
@@ -40,6 +41,12 @@ function ActivityDetail() {
   if (notFound || error) {
     return (
       <div className="page-container content-detail-message" role={error ? 'alert' : undefined}>
+        <Seo
+          title="Activity unavailable"
+          description="This activity record is not available. Browse the published Alliance Yuwa Club activity archive instead."
+          path={`/activities/${slug}`}
+          robots="noindex, follow"
+        />
         <p className="content-eyebrow">Activity archive</p>
         <h1>{notFound ? 'This activity is not available.' : 'We could not load this activity.'}</h1>
         <p>Return to the published activity archive to continue exploring the club’s work.</p>
@@ -50,6 +57,13 @@ function ActivityDetail() {
 
   return (
     <article className="content-detail">
+      <Seo
+        title={activity.title}
+        description={activity.description}
+        path={`/activities/${slug}`}
+        type="article"
+        image={activity.cover_image}
+      />
       <motion.header
         className="page-container detail-hero"
         initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 18 }}

@@ -62,6 +62,28 @@ class GalleryAdminTests(TestCase):
         self.assertEqual(len(images), 2)
         self.assertEqual([image.display_order for image in images], [0, 1])
 
+    def test_batch_upload_rejects_disallowed_image_extension(self):
+        album = GalleryAlbum.objects.create(
+            title="Youth Day", slug="youth-day", date=date(2026, 8, 12)
+        )
+        form = GalleryAlbumAdminForm(
+            data={
+                "title": album.title,
+                "slug": album.slug,
+                "date": album.date.isoformat(),
+            },
+            files=MultiValueDict(
+                {"batch_images": [SimpleUploadedFile("unsupported.gif", b"image")]}
+            ),
+            instance=album,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("batch_images", form.errors)
+        self.assertIn(
+            ".jpg, .jpeg, .png, or .webp", form.errors["batch_images"][0]
+        )
+
 
 class GalleryApiTests(APITestCase):
     def setUp(self):

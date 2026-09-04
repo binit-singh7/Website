@@ -2,6 +2,8 @@ from django.contrib import admin
 from django import forms
 from django.db.models import Max
 
+from core.validators import image_upload_validators
+
 from .models import GalleryAlbum, GalleryImage
 
 
@@ -24,6 +26,7 @@ class MultipleFileField(forms.FileField):
 class GalleryAlbumAdminForm(forms.ModelForm):
     batch_images = MultipleFileField(
         required=False,
+        validators=image_upload_validators,
         label="Batch Upload Images (Select Multiple Files)",
         widget=MultipleFileInput(attrs={"multiple": True}),
     )

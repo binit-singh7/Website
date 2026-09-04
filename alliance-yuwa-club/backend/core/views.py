@@ -1,6 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.http import JsonResponse
 from rest_framework import generics
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -36,3 +37,6 @@ class AnnouncementListView(generics.ListAPIView):
             Q(start_date__isnull=True) | Q(start_date__lte=today),
             Q(end_date__isnull=True) | Q(end_date__gte=today),
         )
+
+def health_check(request):
+    return JsonResponse({"status": "ok"}, status=200)

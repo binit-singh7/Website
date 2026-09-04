@@ -1,5 +1,7 @@
 from django.db import models
 
+from core.validators import image_upload_validators
+
 
 class ActivityCategory(models.Model):
     name = models.CharField(max_length=100)
@@ -37,7 +39,9 @@ class Activity(models.Model):
     status = models.CharField(
         max_length=10, choices=STATUS_CHOICES, default=STATUS_DRAFT, db_index=True
     )
-    cover_image = models.ImageField(upload_to="activities/", blank=True)
+    cover_image = models.ImageField(
+        upload_to="activities/", blank=True, validators=image_upload_validators
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -52,7 +56,9 @@ class ActivityImage(models.Model):
     activity = models.ForeignKey(
         Activity, on_delete=models.CASCADE, related_name="images"
     )
-    image = models.ImageField(upload_to="activities/images/")
+    image = models.ImageField(
+        upload_to="activities/images/", validators=image_upload_validators
+    )
     caption = models.CharField(max_length=255, blank=True)
     display_order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

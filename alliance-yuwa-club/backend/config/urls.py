@@ -20,11 +20,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from core.sitemaps import sitemap_view
 from core.views import health_check
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", health_check, name="health-check"),
+    path("sitemap.xml", sitemap_view, name="sitemap"),
     path("api/", include("core.urls")),
     path("api/", include("activities.urls")),
     path("api/", include("events.urls")),
@@ -35,5 +37,8 @@ urlpatterns = [
     path("api/", include("contact.urls")),
 ]
 
+# Django serves uploaded media only during local development. WhiteNoise serves
+# static assets, not user-uploaded media; production requires separate media
+# storage and delivery configured by the deployment environment.
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

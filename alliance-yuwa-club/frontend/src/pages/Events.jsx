@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchEvents } from '../services/api'
 import { collectionResult, excerpt, formatDateTime } from './contentUtils'
 import './ContentPages.css'
@@ -39,6 +40,11 @@ function Events() {
 
   return (
     <div className="content-page">
+      <Seo
+        title="Events"
+        description="Find published Alliance Yuwa Club events in Biratnagar, from upcoming community programs and gatherings to completed milestones."
+        path="/events"
+      />
       <header className="content-intro page-container">
         <p className="content-eyebrow">Events</p>
         <h1>Gather. Serve. Lead.</h1>

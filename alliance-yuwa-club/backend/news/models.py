@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from core.validators import image_upload_validators
+
 
 class NewsArticle(models.Model):
     STATUS_DRAFT = "draft"
@@ -16,7 +18,9 @@ class NewsArticle(models.Model):
     slug = models.SlugField(unique=True)
     excerpt = models.TextField(blank=True)
     content = models.TextField()
-    featured_image = models.ImageField(upload_to="news/", blank=True)
+    featured_image = models.ImageField(
+        upload_to="news/", blank=True, validators=image_upload_validators
+    )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,

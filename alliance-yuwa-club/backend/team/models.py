@@ -1,11 +1,15 @@
 from django.db import models
 
+from core.validators import image_upload_validators
+
 
 class TeamMember(models.Model):
     name = models.CharField(max_length=255)
     position = models.CharField(max_length=255)
     bio = models.TextField(blank=True)
-    photo = models.ImageField(upload_to="team/", blank=True)
+    photo = models.ImageField(
+        upload_to="team/", blank=True, validators=image_upload_validators
+    )
     phone = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
     display_order = models.PositiveIntegerField(default=0)

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchNewsArticle } from '../services/api'
 import { formatDateTime } from './contentUtils'
 import './EditorialPages.css'
@@ -43,6 +44,12 @@ function NewsDetail() {
   if (notFound || error) {
     return (
       <div className="page-container content-detail-message" role={error ? 'alert' : undefined}>
+        <Seo
+          title="Article unavailable"
+          description="This news article is not available. Browse the published Alliance Yuwa Club news archive instead."
+          path={`/news/${slug}`}
+          robots="noindex, follow"
+        />
         <p className="content-eyebrow">News & updates</p>
         <h1>{notFound ? 'This article is not available.' : 'We could not load this article.'}</h1>
         <p>Return to the news archive to continue reading published club updates.</p>
@@ -53,6 +60,13 @@ function NewsDetail() {
 
   return (
     <article className="editorial-page news-detail">
+      <Seo
+        title={article.title}
+        description={article.excerpt || article.content}
+        path={`/news/${article.slug}`}
+        type="article"
+        image={article.featured_image}
+      />
       <motion.header
         className="page-container news-detail__header"
         initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 18 }}

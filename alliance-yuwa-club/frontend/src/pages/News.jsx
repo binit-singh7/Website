@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchNews } from '../services/api'
 import { collectionResult, excerpt, formatDateTime } from './contentUtils'
 import './EditorialPages.css'
@@ -35,6 +36,11 @@ function News() {
 
   return (
     <div className="editorial-page">
+      <Seo
+        title="News & Updates"
+        description="Read published reports, announcements, and updates from Alliance Yuwa Club's community work and youth leadership in Biratnagar."
+        path="/news"
+      />
       <header className="page-container editorial-intro">
         <p className="content-eyebrow">News & updates</p>
         <h1>From the club.</h1>

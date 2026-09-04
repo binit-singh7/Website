@@ -109,6 +109,19 @@ ALLOWED_HOSTS = get_list_setting(
 
 
 # =============================================================================
+# PUBLIC SITE
+# =============================================================================
+
+# Public frontend origin (Vercel) used to build canonical URLs for the sitemap.
+# The frontend and Django API are deployed as separate services, so sitemap
+# URLs point at the public site host rather than this service's own host.
+# Mirrors the frontend VITE_SITE_URL value.
+FRONTEND_BASE_URL = os.environ.get(
+    "FRONTEND_BASE_URL", "https://allianceyuwaclub.org.np"
+).rstrip("/")
+
+
+# =============================================================================
 # APPLICATIONS
 # =============================================================================
 
@@ -120,6 +133,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
 
     # Third-party
     "corsheaders",

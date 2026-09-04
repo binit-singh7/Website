@@ -1,5 +1,7 @@
 from django.db import models
 
+from .validators import image_upload_validators
+
 
 class Organization(models.Model):
     name = models.CharField(max_length=255)
@@ -14,7 +16,9 @@ class Organization(models.Model):
     facebook_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     youtube_url = models.URLField(blank=True)
-    logo = models.ImageField(upload_to="organization/", blank=True)
+    logo = models.ImageField(
+        upload_to="organization/", blank=True, validators=image_upload_validators
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

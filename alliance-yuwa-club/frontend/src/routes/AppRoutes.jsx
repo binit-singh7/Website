@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import App from '../App'
 import LoadingState from '../components/LoadingState'
 import NotFound from '../components/NotFound'
+import Seo from '../components/Seo'
 import Activities from '../pages/Activities'
 import ActivityDetail from '../pages/ActivityDetail'
 import About from '../pages/About'
@@ -34,7 +35,15 @@ function AppRoutes() {
         <Route path="gallery/:slug" element={<GalleryDetail />} />
         <Route path="membership" element={<Membership />} />
         <Route path="contact" element={<Contact />} />
-        <Route path="loading" element={<LoadingState />} />
+        <Route
+          path="loading"
+          element={(
+            <>
+              <Seo title="Loading" description="Loading content…" path="/loading" robots="noindex, follow" />
+              <LoadingState />
+            </>
+          )}
+        />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

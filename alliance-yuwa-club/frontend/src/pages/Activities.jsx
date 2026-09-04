@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchActivities } from '../services/api'
 import { collectionResult, excerpt, formatDate } from './contentUtils'
 import './ContentPages.css'
@@ -56,6 +57,11 @@ function Activities() {
 
   return (
     <div className="content-page">
+      <Seo
+        title="Activities"
+        description="Explore published records of Alliance Yuwa Club community action, youth leadership, environment, culture, sport, and service in Biratnagar from 2020 to today."
+        path="/activities"
+      />
       <header className="content-intro page-container">
         <p className="content-eyebrow">Activity archive · 2020–2026</p>
         <h1>Our work, year by year.</h1>

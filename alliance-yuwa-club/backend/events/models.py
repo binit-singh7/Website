@@ -1,5 +1,7 @@
 from django.db import models
 
+from core.validators import image_upload_validators
+
 
 class Event(models.Model):
     STATUS_DRAFT = "draft"
@@ -27,7 +29,9 @@ class Event(models.Model):
     featured = models.BooleanField(default=False)
     registration_required = models.BooleanField(default=False)
     registration_url = models.URLField(blank=True)
-    cover_image = models.ImageField(upload_to="events/", blank=True)
+    cover_image = models.ImageField(
+        upload_to="events/", blank=True, validators=image_upload_validators
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -40,7 +44,9 @@ class Event(models.Model):
 
 class EventImage(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="events/images/")
+    image = models.ImageField(
+        upload_to="events/images/", validators=image_upload_validators
+    )
     caption = models.CharField(max_length=255, blank=True)
     display_order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

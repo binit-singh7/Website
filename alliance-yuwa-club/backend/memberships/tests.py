@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from rest_framework.test import APITestCase
 
@@ -47,6 +48,14 @@ class MembershipApplicationApiTests(APITestCase):
         "reason_for_joining": "Community service",
     }
 
+    def setUp(self):
+        super().setUp()
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+        super().tearDown()
+
     def test_valid_submission_creates_pending_application_without_admin_control(self):
         payload = self.payload | {"status": "approved", "admin_notes": "Ignore"}
 
@@ -65,3 +74,18 @@ class MembershipApplicationApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("phone", response.data)
+
+    def test_membership_application_is_throttled_per_client_ip(self):
+        for _ in range(3):
+            response = self.client.post(
+                "/api/membership/apply/", self.payload, format="json"
+            )
+            self.assertEqual(response.status_code, 201)
+
+        response = self.client.post(
+            "/api/membership/apply/", self.payload, format="json"
+        )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertIn("detail", response.data)
+        self.assertEqual(MembershipApplication.objects.count(), 3)

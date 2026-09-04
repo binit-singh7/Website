@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import GalleryLightbox from '../components/GalleryLightbox'
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchGalleryAlbum } from '../services/api'
 import { formatDate } from './contentUtils'
 import { getAlbumTags } from './galleryUtils'
@@ -47,6 +48,12 @@ function GalleryDetail() {
 
   if (notFound || error) {
     return <div className="page-container content-detail-message" role={error ? 'alert' : undefined}>
+      <Seo
+        title="Album unavailable"
+        description="This photo album is not available. Browse the published Alliance Yuwa Club gallery instead."
+        path={`/gallery/${slug}`}
+        robots="noindex, follow"
+      />
       <p className="content-eyebrow">Gallery</p>
       <h1>{notFound ? 'This album is not available.' : 'We could not load this album.'}</h1>
       <p>Return to the published photo archive to continue exploring the club’s work.</p>
@@ -60,6 +67,13 @@ function GalleryDetail() {
 
   return (
     <article className="gallery-detail">
+      <Seo
+        title={album.title}
+        description={album.description || `Browse published photographs from the ${album.title} album by Alliance Yuwa Club in Biratnagar.`}
+        path={`/gallery/${album.slug}`}
+        type="gallery"
+        image={album.cover_image}
+      />
       <motion.header className="page-container gallery-detail__hero" initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.4 }}>
         <Link className="text-link" to="/gallery">← Back to gallery</Link>
         <p className="content-eyebrow">Photo album</p>

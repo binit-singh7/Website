@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchEvent } from '../services/api'
 import { formatDateTime } from './contentUtils'
 import './ContentPages.css'
@@ -47,6 +48,12 @@ function EventDetail() {
   if (notFound || error) {
     return (
       <div className="page-container content-detail-message" role={error ? 'alert' : undefined}>
+        <Seo
+          title="Event unavailable"
+          description="This event is not available. Browse the published Alliance Yuwa Club events list instead."
+          path={`/events/${slug}`}
+          robots="noindex, follow"
+        />
         <p className="content-eyebrow">Events</p>
         <h1>{notFound ? 'This event is not available.' : 'We could not load this event.'}</h1>
         <p>Return to the events list to continue exploring the club’s public schedule.</p>
@@ -57,6 +64,13 @@ function EventDetail() {
 
   return (
     <article className="content-detail">
+      <Seo
+        title={event.title}
+        description={event.description}
+        path={`/events/${event.slug}`}
+        type="article"
+        image={event.cover_image}
+      />
       <motion.header
         className="page-container detail-hero"
         initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 18 }}

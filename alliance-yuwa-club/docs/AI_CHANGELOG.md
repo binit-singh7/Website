@@ -1078,8 +1078,6 @@ Related Documentation:
 - DEVELOPMENT.md
 - DESIGN_SYSTEM.md
 
----
-
 ## CHANGE-0005 — Integrate Official Organization Logo
 
 Date:
@@ -1701,5 +1699,741 @@ Verification:
 - `git diff --check` — passed.
 - No container build or runtime test was run, by request to avoid heavy
   terminal work.
+
+---
+
+## CHANGE-0014 — Restore Django Default Media Storage
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+backend / media correctness
+
+Audit Finding Addressed:
+The production-readiness audit found that `STORAGES` configured WhiteNoise
+static-file storage only. Django therefore had no `default` storage alias,
+which could raise `InvalidStorageError` when public serializers accessed an
+`ImageField` URL. Production `/media/` delivery was also incorrectly easy to
+mistake for a WhiteNoise responsibility.
+
+Files Changed:
+- backend/config/settings.py
+- backend/config/urls.py
+- backend/core/tests.py
+- docs/AI_CHANGELOG.md
+
+Functions / Classes / Configuration:
+- `STORAGES`, `MEDIA_URL`, and `MEDIA_ROOT` in `config.settings`
+- Development media routing in `config.urls`
+- `PublicMediaSerializationTests` in `core.tests`
+
+Code Location:
+- backend/config/settings.py: approximately lines 188–204
+- backend/config/urls.py: approximately lines 38–42
+- backend/core/tests.py: approximately lines 58–160
+
+Implementation:
+- Declared Django's `default` storage as `FileSystemStorage` and retained
+  WhiteNoise's compressed manifest storage exclusively for `staticfiles`.
+- Kept `MEDIA_URL` and `MEDIA_ROOT` separate from static-file settings.
+- Preserved Django's development-only media URL routing and documented that
+  WhiteNoise is not an uploaded-media solution.
+- Added API regression coverage for organization logos, activity cover/detail
+  images, event cover/detail images, news images, team photos, and gallery
+  cover/detail images. The tests assign field names only; they do not create
+  synthetic image files.
+
+Why This Approach:
+This restores Django's standard, local filesystem-backed default without
+inventing a provider or conflating uploads with immutable static assets.
+
+Dependencies Added:
+None.
+
+Database Changes:
+None.
+
+API Changes:
+None. Existing image fields retain their public URL response contract.
+
+Tests:
+- Added default-storage URL regression coverage.
+- Added public serializer/API coverage for every public image field.
+
+Verification:
+- `python manage.py check` completed with the 13 pre-existing
+  `DEFAULT_AUTO_FIELD` warnings.
+- `python manage.py test` passed: 27 tests.
+- Public media URLs are asserted to use `/media/` paths and never local
+  filesystem paths.
+
+Unnecessary Alternatives Considered:
+- Serving uploads through WhiteNoise was rejected because WhiteNoise is for
+  immutable static assets, not user-uploaded media.
+- Adding a cloud media provider was not done because no provider or deployment
+  credentials were approved for this focused fix.
+
+Remaining Production Media Limitation:
+`FileSystemStorage` is the correct local/default foundation only. Before a
+production deployment, the chosen hosting architecture must provide durable
+uploaded-media storage and public media delivery; no provider was invented by
+this change.
+
+Related Documentation:
+- REQUIREMENTS.md
+- ARCHITECTURE.md
+- DATABASE.md
+- API.md
+- DEVELOPMENT.md
+
+Scope Control:
+Unrelated audit findings, including Docker build-context hygiene, dependency
+environment mismatch, abuse protection, upload limits, host configuration,
+homepage content, SEO, and administrative API documentation, were not
+modified.
+
+---
+
+## CHANGE-0015 — Exclude Local Backend State from Docker Build Context
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+deployment / Docker build-context hygiene
+
+Audit Finding Addressed:
+The backend Compose service builds with `./backend` as its Docker context and
+the Dockerfile uses `COPY . .`. That directory can contain ignored-but-local
+runtime state, including `venv/`, `db.sqlite3`, and `media/`. Without a
+context-specific ignore file, Docker can send those files to the builder and
+the broad copy can place them in an image layer.
+
+Why This Fix Was Necessary:
+Excluding local environments, database state, uploaded media, secrets, and
+tooling output keeps the build smaller and reproducible and avoids exposing
+local data or PII to Docker build layers.
+
+Files Changed:
+- backend/.dockerignore
+- docs/AI_CHANGELOG.md
+
+Docker Configuration Changed:
+- Added a backend-context `.dockerignore` for Python virtual environments and
+  bytecode, local SQLite state, `media/`, `.env` variants, Git metadata, and
+  clearly local test/lint/log artifacts.
+- Kept `requirements.txt`, `manage.py`, `config/`, all Django application
+  source directories, and the Dockerfile available to the existing Docker
+  build. The Dockerfile and Compose configuration were not rewritten.
+
+Application / Database / Media / Frontend Scope:
+- No application code changed.
+- No database changes were made.
+- No media provider was added.
+- No frontend changes were made.
+
+Assumptions:
+The production backend image is built from the source-controlled backend
+files; local SQLite data, uploaded media, virtual environments, `.env` files,
+and tooling caches are not image inputs. Persistent production media continues
+to be supplied by the existing Compose volume at runtime, not by the build
+context.
+
+Tests and Verification:
+- Inspected the live Compose context (`./backend`) and backend Dockerfile copy
+  directives.
+- Confirmed that the ignore rules retain all required backend source inputs.
+- `docker compose config --no-interpolate` — passed; it resolves the backend
+  build context to the backend directory and preserves the expected services,
+  volumes, and environment placeholders.
+- `docker compose build backend` — passed. Docker loaded the `.dockerignore`,
+  transferred a 18.62 kB backend context, completed `COPY . .`, and completed
+  `python manage.py collectstatic --noinput` successfully.
+- `git diff --check` — passed.
+
+Unnecessary Alternatives Rejected:
+- Did not narrow or refactor the existing Dockerfile `COPY . .`, because the
+  context-specific ignore file addresses the leak while preserving required
+  source files.
+- Did not change Git ignore rules, delete local database/media files, add a
+  media provider, alter application code, or change unrelated Docker services.
+
+---
+
+## CHANGE-0016 — Align Backend Virtual Environment with Requirements
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+backend / dependency environment verification
+
+Audit Finding Addressed:
+The active backend virtual environment did not match `backend/requirements.txt`.
+It contained Django 6.1.1 despite the declared `Django>=5.0,<6.0` range,
+contained `psycopg2-binary` 2.9.12 instead of 2.9.10, and lacked the declared
+Gunicorn and WhiteNoise packages. That made local Django checks and tests
+inconsistent with the project dependency contract.
+
+Environment Adjustment:
+- Installed the existing `backend/requirements.txt` set into `backend/venv`.
+- The resulting relevant versions are Django 5.2.17,
+  djangorestframework 3.18.0, django-cors-headers 4.9.0, Pillow 12.1.1,
+  gunicorn 23.0.0, psycopg2-binary 2.9.10, and whitenoise 6.11.0.
+- `pip check` reports no broken requirements.
+- No dependency was added or changed in `requirements.txt`.
+
+Configuration Adjustment:
+- Set `DEFAULT_AUTO_FIELD` to `django.db.models.BigAutoField`, matching every
+  existing initial migration. This resolves the generated implicit-primary-key
+  migration proposals after moving back to the declared Django 5.x range.
+- No model was changed and no migration was created or applied.
+
+Files Changed:
+- backend/config/settings.py
+- docs/AI_CHANGELOG.md
+
+Verification:
+- Ran `python manage.py check` from `backend/` with a process-local,
+  non-production `SECRET_KEY`; passed with no issues.
+- Ran `python manage.py makemigrations --check`; passed with no changes
+  detected.
+- Ran `python manage.py test`; passed: 27 tests.
+
+Verification Environment Note:
+The shell had `DEBUG=False` but no active `SECRET_KEY`. A temporary key was
+provided only to the verification process; no secret was written to source or
+stored in project configuration, and production secret validation remains
+unchanged.
+
+Scope Control:
+- No frontend, API contract, model, migration, database schema, rate-limiting,
+  security-header, or PaaS integration change was made.
+- The test process emits a non-failing WhiteNoise notice because the local
+  `staticfiles/` directory has not been generated; the test suite remains
+  fully green and production image builds run `collectstatic`.
+
+---
+
+## CHANGE-0017 — Throttle Public Form Submissions
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+backend / API security
+
+Audit Finding Addressed:
+The public POST endpoints for contact messages and membership applications had
+no submission throttling. Automated clients could repeatedly submit either
+form, creating spam records and needlessly consuming application resources.
+
+Implementation:
+- Configured Django REST Framework's built-in `ScopedRateThrottle` as the
+  default throttle class and added named throttle rates.
+- Applied the `contact_submission` scope only to
+  `ContactMessageCreateView` (`/api/contact/`) and the
+  `membership_application` scope only to `MembershipApplicationCreateView`
+  (`/api/membership/apply/`).
+- Default per-client-IP limits are five contact submissions per hour and three
+  membership applications per day.
+- `CONTACT_SUBMISSION_THROTTLE_RATE` and
+  `MEMBERSHIP_APPLICATION_THROTTLE_RATE` may override those rates through the
+  environment without a code change.
+- Successful submission responses and their HTTP 201 status remain unchanged.
+  Requests over the limit receive DRF's standard HTTP 429 response with its
+  `detail` error payload.
+
+Files Changed:
+- backend/config/settings.py
+- backend/contact/views.py
+- backend/contact/tests.py
+- backend/memberships/views.py
+- backend/memberships/tests.py
+- docs/AI_CHANGELOG.md
+
+Classes / Configuration Modified:
+- `REST_FRAMEWORK` throttle classes and rates in `config.settings`
+- `ContactMessageCreateView`
+- `MembershipApplicationCreateView`
+- Contact and membership API regression test classes
+
+Tests Added:
+- Contact submissions accept five rapid requests from one client IP and reject
+  the sixth with HTTP 429 and a `detail` payload.
+- Membership applications accept three rapid requests from one client IP and
+  reject the fourth with HTTP 429 and a `detail` payload.
+- Test cache setup/cleanup prevents one throttle test from affecting another.
+
+Verification:
+- `python manage.py check` — passed with no issues.
+- `python manage.py test` — passed: 29 tests.
+
+Scope Control:
+- No frontend, API success contract, database model, migration, schema,
+  deployment/host configuration, CAPTCHA service, or third-party dependency
+  was changed.
+
+---
+
+## CHANGE-0018 — Validate Image Upload Size and Extensions
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+backend / upload validation
+
+Audit Finding Addressed:
+Image upload fields did not enforce an explicit size limit or allowed filename
+extensions. Oversized uploads and unwanted file types could therefore enter
+the Django Admin upload paths, including gallery batch uploads.
+
+Validation Rules:
+- Maximum image size: 5 MiB (5 × 1024 × 1024 bytes) per file.
+- Allowed extensions: `.jpg`, `.jpeg`, `.png`, and `.webp`.
+- Files over the limit raise a descriptive Django `ValidationError`; unsupported
+  extensions are rejected with an allowed-extension message. DRF serializers
+  that use these model fields surface the normal HTTP 400 field errors.
+
+Implementation:
+- Added reusable image validators in `core.validators`.
+- Attached the shared validator list to every uploaded-image `ImageField`:
+  organization logo; activity and event covers/detail images; news featured
+  image; team photo; gallery album cover and album images.
+- Applied the same validators to `GalleryAlbumAdminForm.batch_images`, so the
+  custom multi-file Django Admin route cannot bypass validation.
+- Added state-only `AlterField` migrations for the validation metadata. They
+  do not alter database tables, columns, or data.
+
+Files Changed:
+- backend/core/validators.py
+- backend/{core,activities,events,news,team,gallery}/models.py
+- backend/{core,activities,events,news,team,gallery}/migrations/0002_*.py
+- backend/gallery/admin.py
+- backend/core/tests.py
+- backend/gallery/tests.py
+- docs/AI_CHANGELOG.md
+
+Tests Added:
+- Valid `.jpg`, `.png`, and `.webp` uploads below the limit are accepted.
+- An upload over 5 MiB raises a validation error.
+- An unsupported extension is rejected.
+- Every model image field is asserted to use the shared validators.
+- Gallery Admin batch upload rejection is covered.
+
+Verification:
+- `python manage.py check` — passed with no issues.
+- `python manage.py makemigrations --check` — passed with no changes detected.
+- `python manage.py test` — passed: 34 tests.
+
+Scope Control:
+- No frontend, public API success contract, cloud-storage configuration,
+  rate-limiting/security-header setting, third-party dependency, or database
+  schema/data change was made.
+
+---
+
+## CHANGE-0019 — Add Conditional Supabase S3 Media Storage
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+deployment / production media storage
+
+Audit Finding Addressed:
+Local filesystem media is lost when an ephemeral production container restarts.
+Supabase Storage is the approved durable production media provider, but Django
+did not yet have an S3-compatible storage driver or a conditional production
+storage configuration.
+
+Dependencies Added:
+- django-storages[s3]==1.14.6
+- boto3==1.43.88
+
+Storage Backend Selection:
+- `USE_SUPABASE_STORAGE` defaults to false. Without the flag, local development
+  continues to use `FileSystemStorage` and `/media/` unchanged.
+- With the flag true, the default storage is
+  `storages.backends.s3boto3.S3Boto3Storage`; WhiteNoise remains the unchanged
+  `staticfiles` backend.
+- Supabase uses path-style S3 addressing and unsigned public object URLs.
+  The public media base is derived from the S3 endpoint as
+  `/storage/v1/object/public/<bucket>/`; an optional
+  `SUPABASE_STORAGE_PUBLIC_URL` supports a custom public URL.
+
+Required Production Environment Variables:
+- USE_SUPABASE_STORAGE=true
+- SUPABASE_STORAGE_BUCKET
+- SUPABASE_S3_ACCESS_KEY_ID
+- SUPABASE_S3_SECRET_ACCESS_KEY
+- SUPABASE_S3_ENDPOINT_URL
+- SUPABASE_S3_REGION (defaults to `us-east-1` when omitted)
+
+Files Changed:
+- backend/requirements.txt
+- backend/config/settings.py
+- backend/core/tests.py
+- docs/AI_CHANGELOG.md
+
+Tests Added:
+- Local configuration with `USE_SUPABASE_STORAGE=False` resolves to
+  `FileSystemStorage` and `/media/`.
+- Supabase configuration resolves the requested S3Boto3 backend, public media
+  URL, default region, and unsigned URL setting without contacting Supabase.
+
+Verification:
+- `python -m pip check` — passed with no broken requirements.
+- `python manage.py check` — passed with no issues.
+- `python manage.py test` — passed: 36 tests.
+
+Scope Control:
+- No credentials were hardcoded.
+- No frontend, database model/migration, public API contract, CORS/host,
+  deployment-platform, or static-file configuration change was made.
+
+---
+
+## CHANGE-0020 — Harden Production Host, Proxy, and Security Settings
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+security / deployment
+
+Requirement:
+PRODUCTION_READINESS_AUDIT.md §6 (Security) and §7 (Deployment) — complete
+production host, CORS, CSRF, reverse-proxy, and security-header configuration
+for PaaS deployment on Render. REQUIREMENTS.md §14 and ARCHITECTURE.md §12
+require environment-managed secrets, explicit CORS, and HTTPS without
+hardcoded hosts or credentials.
+
+Audit Finding Addressed:
+1. `ALLOWED_HOSTS` formatting had to safely parse comma-separated environment
+   strings.
+2. Explicit `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` parsing was
+   needed for the Vercel frontend domains.
+3. Render runs behind a reverse proxy, requiring `SECURE_PROXY_SSL_HEADER` and
+   dynamic `$PORT` handling for Gunicorn.
+4. Production security headers (HTTPS redirect, HSTS, secure cookies) had to
+   activate only when `DEBUG=False`.
+
+Implementation:
+- `get_list_setting()` now accepts an optional `environment` mapping (mirroring
+  `get_boolean_setting`) so the comma-separated parser is directly testable.
+  Values are split on commas, trimmed of surrounding whitespace, and blank
+  entries are dropped, so strings such as
+  `https://allianceyuwaclub.org.np, https://*.vercel.app,` never yield empty
+  host/origin entries. `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, and
+  `CSRF_TRUSTED_ORIGINS` all use this parser.
+- Set `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")` so
+  `request.is_secure()` and the HTTPS redirects behave correctly behind
+  Render's TLS-terminating proxy.
+- Added a `if not DEBUG:` production-hardening block that enables
+  `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `SECURE_SSL_REDIRECT`,
+  `SECURE_HSTS_SECONDS` (default 31536000), and optional HSTS subdomain/preload
+  and `SECURE_REFERRER_POLICY`. `SECURE_SSL_REDIRECT` defaults to true in
+  production but honors a `SECURE_SSL_REDIRECT` environment override so the
+  redirect can be disabled if the proxy already performs it (avoiding loops).
+- Kept `SECURE_BROWSER_XSS_FILTER`, `SECURE_CONTENT_TYPE_NOSNIFF`, and
+  `X_FRAME_OPTIONS = "DENY"` enabled in every environment.
+- The `else` (DEBUG) branch explicitly keeps `SECURE_SSL_REDIRECT`,
+  `SESSION_COOKIE_SECURE`, and `CSRF_COOKIE_SECURE` disabled so local HTTP
+  development continues to work with no environment variables.
+- `backend/Dockerfile` CMD switched to shell form so Gunicorn binds to
+  `0.0.0.0:${PORT:-8000}`, respecting Render's dynamic `$PORT` while defaulting
+  to 8000 for plain local Docker runs.
+
+Required Production Environment Variables (Render):
+- DEBUG=false
+- SECRET_KEY (persistent, from the Render environment)
+- ALLOWED_HOSTS (comma-separated, e.g. `allianceyuwaclub.org.np,.onrender.com`)
+- CORS_ALLOWED_ORIGINS (comma-separated, e.g.
+  `https://allianceyuwaclub.org.np,https://*.vercel.app`)
+- CSRF_TRUSTED_ORIGINS (comma-separated, scheme required, e.g.
+  `https://allianceyuwaclub.org.np,https://*.vercel.app`)
+- Database `DATABASE_URL` / `POSTGRES_*` values (unchanged from prior work)
+- Optional overrides: `SECURE_SSL_REDIRECT`, `SECURE_HSTS_SECONDS`,
+  `SECURE_HSTS_INCLUDE_SUBDOMAINS`, `SECURE_HSTS_PRELOAD`,
+  `SECURE_REFERRER_POLICY`
+
+Files Changed:
+- backend/config/settings.py
+- backend/Dockerfile
+- backend/core/tests.py
+- docs/AI_CHANGELOG.md
+
+Functions / Classes / Configuration:
+- `get_list_setting()` (added `environment` parameter)
+- `SECURE_PROXY_SSL_HEADER` and the `if not DEBUG:` security block
+- `ProductionEnvironmentParsingTests`
+
+Tests Added:
+- `test_allowed_hosts_splits_and_strips_comma_separated_values`
+- `test_cors_origins_parse_https_and_wildcard_entries`
+- `test_csrf_trusted_origins_parse_comma_separated_values`
+- `test_missing_value_falls_back_to_default`
+- `test_empty_string_yields_empty_list`
+- `test_settings_expose_parsed_lists`
+
+Verification:
+- `python manage.py check` — passed with no issues.
+- `python manage.py test` — passed: 42 tests (36 prior + 6 new).
+- Manual `DEBUG=False` shell check confirmed comma parsing plus
+  `SECURE_PROXY_SSL_HEADER`, `SECURE_SSL_REDIRECT`, secure cookies, and HSTS
+  all activate; a clean-environment `DEBUG=True` check confirmed local defaults
+  (localhost hosts, Vite CORS, no SSL redirect, non-secure cookies) are
+  unchanged.
+
+Unnecessary Alternatives Considered:
+- Did not convert wildcard origins (e.g. `https://*.vercel.app`) into
+  `CORS_ALLOWED_ORIGIN_REGEXES`. The audit required only safe comma-separated
+  parsing; adding regex translation would change CORS matching behavior beyond
+  the task scope and is left as a documented follow-up if wildcard matching is
+  later required.
+- Did not add a `render.yaml`, a separate settings module, python-dotenv, or an
+  entrypoint script; the existing single settings module plus the shell-form
+  Docker CMD already satisfies the `$PORT` and proxy requirements.
+
+Scope Control:
+- No secrets, passwords, or host domains were hardcoded.
+- No React components, frontend styles, page layouts, database models,
+  migrations, or public REST API schemas were changed.
+- Local development defaults (running with no environment variables) are
+  preserved.
+
+---
+
+## CHANGE-0021 — Configure Vercel SPA Routing and Verify Frontend Build
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+deployment / frontend
+
+Requirement:
+ARCHITECTURE.md §7 defines the client-side React Router routes (`/about`,
+`/activities/:slug`, `/events/:slug`, `/news/:slug`, `/team`, `/membership`,
+`/contact`, `/gallery`, …) and §13 states the frontend and backend deploy
+independently. The Vercel frontend deployment therefore needs single-page
+application (SPA) rewriting so direct navigation and browser refreshes on those
+deep routes resolve to the built `index.html`.
+
+Audit Finding Addressed:
+The frontend lacked a `vercel.json` routing configuration. On Vercel, direct
+navigation or a browser refresh on a non-root path (for example `/gallery`,
+`/membership`, or `/about`) would return HTTP 404 because the static host has
+no server-side route for those client-side paths and no SPA rewrite existed.
+
+Implementation:
+- Added `frontend/vercel.json` with the standard SPA rewrite
+  `{ "source": "/(.*)", "destination": "/index.html" }`. Vercel serves existing
+  static files (hashed JS/CSS/images under `/assets`) from the filesystem first,
+  so only unknown client-side routes are rewritten to the built `index.html`.
+- Verified the API base URL fallback in `frontend/src/services/api.js` already
+  reads `import.meta.env.VITE_API_BASE_URL` and falls back to the local
+  development default `http://127.0.0.1:8000/api` (the `/api` prefix is required
+  by the documented endpoint paths). No change was needed, and the request
+  contract was intentionally left untouched.
+- Confirmed `frontend/vite.config.js` uses the default Vite `dist` output, which
+  is the directory Vercel deploys and the location of the rewrite target.
+
+Build Verification:
+- `npm run build` (`vite build`) from `frontend/` — passed cleanly: Vite 8.2.2,
+  519 modules transformed, `dist/index.html` plus hashed CSS/JS and image assets
+  emitted, built in ~700ms, with no TypeScript, JSX, or bundling errors.
+
+Files Changed:
+- frontend/vercel.json (created)
+- docs/AI_CHANGELOG.md
+
+Configuration Added:
+- `frontend/vercel.json` SPA `rewrites` rule.
+
+Unnecessary Alternatives Considered:
+- Did not add a `redirects` block, a `builds` array, a `framework` key, or a
+  custom `_redirects` file. A single catch-all rewrite is the documented,
+  minimal Vite/React Router SPA configuration and avoids conflicting with
+  Vercel's automatic static asset handling.
+- Did not change `vite.config.js`, the Axios client, environment variable names,
+  or the existing Docker/Nginx deployment path; those are out of scope for this
+  Vercel routing task.
+
+Scope Control:
+- No React components, page layouts, or styles were redesigned.
+- No backend Django settings, database models, or migrations were modified.
+- No new frontend dependencies or UI libraries were added.
+- No API request contract was changed; the `VITE_API_BASE_URL` fallback and the
+  local development default remain intact.
+
+---
+
+## CHANGE-0022 — Final Pre-Launch Smoke Test and Readiness Sign-Off
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+documentation / deployment sign-off
+
+Pre-Launch Readiness Status:
+GREEN.
+
+Requirement:
+Final verification pass prior to production deployment across the backend and
+frontend build environments, confirming the cumulative pre-launch audit
+remediations (CHANGE-0014 through CHANGE-0022) are complete and non-regressed.
+
+Backend Verification (run from `backend/` in a clean local-default environment):
+- `python manage.py check` — passed: "System check identified no issues
+  (0 silenced)." (exit code 0).
+- `python manage.py makemigrations --check` — passed: "No changes detected,"
+  confirming zero pending migrations (exit code 0).
+- `python manage.py test` — passed: 42 tests, "OK" (exit code 0), with zero
+  errors or unexpected failures.
+
+Frontend Verification (run from `frontend/`):
+- `npm run build` (`vite build`) — passed cleanly: Vite 8.2.2, 519 modules
+  transformed, `dist/index.html` plus hashed CSS/JS and image assets emitted,
+  no TypeScript, JSX, or bundling errors (exit code 0).
+
+Audit Items Completed (CHANGE-0014 through CHANGE-0022):
+- CHANGE-0014 — Default media storage restored (FileSystemStorage default).
+- CHANGE-0015 — Backend Docker build-context hygiene (.dockerignore).
+- CHANGE-0016 — Backend virtual environment aligned with requirements.
+- CHANGE-0017 — Public form submissions throttled (contact/membership).
+- CHANGE-0018 — Image upload size and extension validation.
+- CHANGE-0019 — Conditional Supabase S3 media storage.
+- CHANGE-0020 — Production host, CORS/CSRF, proxy, and security headers.
+- CHANGE-0021 — Vercel SPA routing configuration.
+- CHANGE-0022 — This final pre-launch smoke test and sign-off.
+
+Files Changed:
+- docs/AI_CHANGELOG.md
+
+Verification:
+- Backend check/makemigrations/test exit codes: 0 / 0 / 0.
+- Backend passing test count: 42.
+- Pending migrations: none.
+- Frontend production build exit code: 0 (clean bundle).
+
+Scope Control:
+- This is a verification-only pass. No application code, configuration, models,
+  migrations, dependencies, or documentation content other than this changelog
+  entry was modified.
+
+Sign-Off:
+All documented pre-launch backend and frontend verification checks pass with
+zero errors, zero pending migrations, and a clean production bundle. The
+Alliance Yuwa Club V1 codebase is signed off as ready for production
+deployment (backend to Render, frontend to Vercel) with the required
+environment variables supplied by each hosting provider.
+
+---
+
+## CHANGE-0023 — Implement React Frontend SEO Infrastructure
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+frontend / SEO
+
+Requirement:
+REQUIREMENTS.md and ARCHITECTURE.md require a launch-ready public website with
+basic SEO (per DEVELOPMENT.md Day 8 "SEO basics"). The React single-page
+frontend previously had only a static `index.html` title/favicon and no
+per-route metadata, structured data, or crawler files.
+
+Audit Finding Addressed:
+The frontend lacked SEO infrastructure: no dynamic per-page `<title>`/meta
+description/Open Graph/canonical tags, no `robots.txt`/`sitemap.xml`, and no
+Schema.org structured data, limiting search-engine indexing and social-link
+preview quality.
+
+Implementation:
+- Installed `react-helmet-async` (added to `frontend/package.json`; 5 packages,
+  0 vulnerabilities).
+- Wrapped the application root in `frontend/src/main.jsx` with
+  `<HelmetProvider>` (outside `BrowserRouter`), enabling safe head-tag management.
+- Added a reusable `frontend/src/components/Seo.jsx` that renders only Helmet
+  tags (title with site-name suffix, meta description, canonical link, Open
+  Graph `og:type/site_name/title/description/url`, and Twitter card tags) and
+  contributes no visible DOM, so page layout and styling are unchanged. The
+  canonical origin defaults to `https://allianceyuwaclub.org.np` and is
+  overridable via `VITE_SITE_URL` for preview/staging hosts.
+- Applied `<Seo>` to the five key routes: Home (`/`), About (`/about`),
+  Gallery (`/gallery`), Membership (`/membership`), and Contact (`/contact`),
+  each with a tailored title and meta description.
+- Created `frontend/public/robots.txt` (allow all, disallow `/admin/`, sitemap
+  reference) and `frontend/public/sitemap.xml` with canonical URLs for the five
+  routes. Vite copies `public/` verbatim, so both are emitted to `dist/`.
+- Added a Schema.org `NGO` JSON-LD block to `frontend/index.html` `<head>`.
+
+Dependencies Added:
+- react-helmet-async — required for client-side management of document head
+  metadata (title/meta/OG/canonical) in the React SPA.
+
+Files Changed:
+- frontend/package.json (dependency added)
+- frontend/src/main.jsx (HelmetProvider)
+- frontend/src/components/Seo.jsx (new)
+- frontend/src/pages/Home.jsx
+- frontend/src/pages/About.jsx
+- frontend/src/pages/Gallery.jsx
+- frontend/src/pages/Membership.jsx
+- frontend/src/pages/Contact.jsx
+- frontend/public/robots.txt (new)
+- frontend/public/sitemap.xml (new)
+- frontend/index.html (JSON-LD)
+- docs/AI_CHANGELOG.md
+
+Build Verification:
+- `npm run build` (`vite build`) from `frontend/` — passed cleanly (exit code 0):
+  Vite 8.2.2, 524 modules transformed, no TypeScript/JSX/bundling errors.
+- Confirmed `dist/robots.txt` and `dist/sitemap.xml` are emitted and the
+  `application/ld+json` script is present in `dist/index.html`.
+
+Scope Control:
+- No component layouts or visual styling were redesigned; `Seo` renders only
+  head metadata.
+- No backend Django settings, models, migrations, or API request contracts were
+  changed.
+- The only new dependency is `react-helmet-async`, explicitly required by this
+  task.
 
 ---

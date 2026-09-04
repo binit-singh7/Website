@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchTeamMembers } from '../services/api'
 import './EditorialPages.css'
 
@@ -27,6 +28,11 @@ function Team() {
 
   return (
     <div className="editorial-page">
+      <Seo
+        title="Team"
+        description="Meet the public-facing executive committee of Alliance Yuwa Club, the youth-led community organization formed through the First General Convention in Biratnagar."
+        path="/team"
+      />
       <header className="page-container editorial-intro">
         <p className="content-eyebrow">Executive committee</p>
         <h1>People behind the work.</h1>
