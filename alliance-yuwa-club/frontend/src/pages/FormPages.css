@@ -1,0 +1,64 @@
+.form-page { overflow: clip; }
+.form-page__hero { background: var(--color-surface); border-bottom: var(--border-width) solid var(--color-border); padding-block: clamp(3.5rem, 8vw, 7rem); }
+.form-page__hero-grid { display: grid; gap: var(--space-7); }
+.form-page__hero h1, .form-page__content h2, .contact-details h2, .contact-form-wrap h2, .form-notice h2 { font-family: var(--font-display); letter-spacing: -0.05em; line-height: 0.92; margin: 0; }
+.form-page__hero h1 { font-size: var(--text-display); max-width: 9ch; }
+.form-page__hero header > p:last-child, .form-page__content > div > p:last-child, .contact-form-wrap > p:not(.content-eyebrow) { color: var(--color-text-muted); font-size: var(--text-lg); line-height: 1.55; margin: var(--space-4) 0 0; max-width: 38rem; }
+.membership-invitation { background: var(--color-secondary-dark); color: var(--color-surface); display: grid; gap: var(--space-4); padding: var(--space-6); }
+.membership-invitation .content-eyebrow { color: var(--color-accent-warm); }
+.membership-invitation ul { display: grid; gap: var(--space-3); line-height: 1.5; margin: 0; padding-left: 1.25rem; }
+.membership-invitation__note { border-top: var(--border-width) solid color-mix(in srgb, var(--color-surface) 35%, transparent); color: color-mix(in srgb, var(--color-surface) 78%, transparent); font-size: var(--text-sm); line-height: 1.5; margin: 0; padding-top: var(--space-4); }
+.form-page__content { display: grid; gap: var(--space-7); padding-block: clamp(4rem, 8vw, 7rem); }
+.form-page__content h2, .contact-details h2, .contact-form-wrap h2 { font-size: var(--text-xl); }
+.club-form { display: grid; gap: var(--space-5); max-width: 52rem; }
+.club-form__grid { display: grid; gap: var(--space-5); }
+.form-field { display: grid; gap: var(--space-2); }
+.form-field label, .club-form__fieldset legend { font-size: var(--text-sm); font-weight: 800; }
+.form-field input, .form-field textarea { background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); min-height: 3rem; padding: var(--space-3); width: 100%; }
+.form-field textarea { line-height: 1.5; min-height: 9rem; resize: vertical; }
+.form-field input:focus, .form-field textarea:focus { border-color: var(--color-primary); outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.form-field input[aria-invalid='true'], .form-field textarea[aria-invalid='true'] { border-color: var(--color-error); }
+.field-hint, .field-error { font-size: var(--text-sm); line-height: 1.45; margin: 0; }
+.field-hint { color: var(--color-text-muted); }
+.field-error { color: var(--color-error); font-weight: 700; }
+.club-form__fieldset { border: 0; border-top: var(--border-width) solid var(--color-border); margin: 0; padding: var(--space-5) 0 0; }
+.club-form__fieldset > p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.45; margin: var(--space-2) 0 0; }
+.club-form__choices { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+.choice-control { align-items: center; cursor: pointer; display: flex; gap: var(--space-3); min-height: 2.75rem; padding: var(--space-2); }
+.choice-control input { accent-color: var(--color-primary-dark); block-size: 1.15rem; inline-size: 1.15rem; }
+.choice-control input:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
+.club-form__actions { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.club-form__actions p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.45; margin: 0; }
+.button:disabled { cursor: wait; opacity: 0.68; }
+.form-notice { border-left: 4px solid; line-height: 1.55; padding: var(--space-4); }
+.form-notice p { margin: var(--space-3) 0 0; }
+.form-notice--success { background: var(--color-surface); border-color: var(--color-primary); }
+.form-notice--error { background: var(--color-surface); border-color: var(--color-error); color: var(--color-error); font-weight: 700; }
+.form-notice .button { margin-top: var(--space-5); }
+.form-page__hero--contact { padding-block-end: clamp(3.5rem, 7vw, 6rem); }
+.form-page__hero-copy { max-width: 44rem; }
+.contact-layout { display: grid; gap: var(--space-7); padding-block: clamp(4rem, 8vw, 7rem); }
+.contact-details { align-content: start; background: var(--color-secondary-dark); color: var(--color-surface); display: grid; gap: var(--space-5); padding: var(--space-6); }
+.contact-details .content-eyebrow { color: var(--color-accent-warm); }
+.contact-details dl { display: grid; gap: var(--space-4); margin: 0; }
+.contact-details dl div { border-top: var(--border-width) solid color-mix(in srgb, var(--color-surface) 35%, transparent); display: grid; gap: var(--space-1); padding-top: var(--space-3); }
+.contact-details dt { color: color-mix(in srgb, var(--color-surface) 68%, transparent); font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; }
+.contact-details dd { line-height: 1.5; margin: 0; }
+.contact-details a { text-decoration-color: color-mix(in srgb, var(--color-surface) 48%, transparent); text-underline-offset: 0.2em; }
+.contact-details__social { border-top: var(--border-width) solid color-mix(in srgb, var(--color-surface) 35%, transparent); padding-top: var(--space-4); }
+.contact-details__social h3 { font-size: var(--text-sm); margin: 0; }
+.contact-details__social p { color: color-mix(in srgb, var(--color-surface) 78%, transparent); font-size: var(--text-sm); line-height: 1.5; margin: var(--space-2) 0 0; }
+.contact-details__social ul { display: flex; flex-wrap: wrap; gap: var(--space-3); list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+.contact-form-wrap { display: grid; align-content: start; gap: var(--space-4); }
+.contact-form-wrap .club-form { margin-top: var(--space-2); }
+
+@media (min-width: 40rem) {
+  .club-form__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .club-form__choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 64rem) {
+  .form-page__hero-grid { grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.75fr); align-items: end; }
+  .form-page__content { grid-template-columns: minmax(15rem, 0.6fr) minmax(0, 1.4fr); }
+  .contact-layout { grid-template-columns: minmax(19rem, 0.7fr) minmax(0, 1.1fr); }
+}

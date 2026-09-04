@@ -1478,3 +1478,66 @@ stock images, or create sample JPEG assets. Public content remains API-driven
 and the fallback SVG handles unavailable media safely.
 
 ---
+
+## CHANGE-0010 — Implement Public Membership and Contact Forms
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+frontend / API integration
+
+Requirement:
+REQUIREMENTS.md §§4.7–4.8, 7–8, 11, and 12 requires public membership and
+contact experiences, responsive presentation, and secure form submission.
+API.md §§11–13 and 20 defines the public organization data and form
+contracts. DESIGN_SYSTEM.md §§9.19, 27–33, 37–38, and 49 requires token-based,
+accessible, mobile-friendly forms with purposeful reduced-motion-aware motion.
+
+Files Changed:
+- frontend/src/services/api.js
+- frontend/src/pages/{Membership,Contact,FormPages,formUtils}.jsx/css/js
+- frontend/src/routes/AppRoutes.jsx
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Added centralized REST methods for organization information, membership
+  applications, and contact messages.
+- Replaced the `/membership` placeholder with a Biratnagar-focused value
+  proposition, participation expectations, and an accessible application form.
+  The form includes API-required ward, occupation, and education fields in
+  addition to personal details, interests, and motivation.
+- Replaced the `/contact` placeholder with public organization data, a
+  Biratnagar fallback location, verified API-provided email/phone/social links,
+  and an accessible inquiry form.
+- Added client validation, server-field error recovery, submitting states,
+  inline alerts, and post-submit confirmations for both forms.
+
+API Routes Used:
+- GET `/api/organization/`
+- POST `/api/membership/apply/`
+- POST `/api/contact/`
+
+Accessibility / Motion:
+- Native labelled controls use `aria-invalid` and `aria-describedby` when
+  errors are present, with live success/error feedback and keyboard-visible
+  high-contrast focus rings.
+- Controls meet a 2.75rem minimum tap target and layouts become single-column
+  on mobile.
+- Restrained Framer Motion entrances use `useReducedMotion` to remove
+  positional animation for users who request reduced motion.
+
+Dependencies Added:
+None.
+
+Database Changes:
+None.
+
+Verification:
+- `npm.cmd run lint` — passed.
+- `npm.cmd run build` — passed.
+
+---

@@ -55,6 +55,18 @@ export function fetchTeamMembers() {
   return requestCollection('/team/')
 }
 
+export function fetchOrganization() {
+  return api.get('/organization/').then((response) => response.data)
+}
+
+export function submitMembershipApplication(application) {
+  return api.post('/membership/apply/', application).then((response) => response.data)
+}
+
+export function submitContactMessage(message) {
+  return api.post('/contact/', message).then((response) => response.data)
+}
+
 export function mediaUrl(path) {
   return path ? new URL(path, api.defaults.baseURL).href : null
 }
