@@ -1650,3 +1650,56 @@ Verification:
 - `python manage.py test gallery` — passed (3 tests).
 
 ---
+
+## CHANGE-0013 — Add Minimal Production Deployment Configuration
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+deployment / security
+
+Requirement:
+The production deployment task requires environment-based Django security
+configuration, WhiteNoise static serving, Dockerized Django/Gunicorn and
+Vite/Nginx services, and PostgreSQL composition without introducing a broad
+deployment framework.
+
+Files Changed:
+- backend/config/settings.py
+- backend/requirements.txt
+- backend/Dockerfile
+- frontend/Dockerfile
+- frontend/nginx.conf
+- frontend/.env.production.example
+- docker-compose.yml
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Kept `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, and `CORS_ALLOWED_ORIGINS`
+  environment-driven and added the requested browser, MIME-sniffing, and frame
+  protection settings.
+- Added WhiteNoise middleware and compressed manifest static-file storage.
+- Added optional PostgreSQL settings, activated by `POSTGRES_DB`, while
+  retaining SQLite for local development without PostgreSQL variables.
+- Added Python 3.11-slim Gunicorn backend and multi-stage Vite/Nginx frontend
+  Dockerfiles.
+- Added a compact Compose stack with healthy PostgreSQL startup, automatic
+  backend migrations, persistent database/media volumes, and build-time
+  `VITE_API_BASE_URL` configuration.
+
+Dependencies Added:
+- gunicorn==23.0.0
+- psycopg2-binary==2.9.10
+- whitenoise==6.11.0
+- django-cors-headers remains explicitly pinned in backend/requirements.txt.
+
+Verification:
+- `git diff --check` — passed.
+- No container build or runtime test was run, by request to avoid heavy
+  terminal work.
+
+---
