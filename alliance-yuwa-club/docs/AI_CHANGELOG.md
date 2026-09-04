@@ -847,6 +847,8 @@ Related Documentation:
 
 ---
 
+
+
 ## CHANGE-0003 — Implement V1 Public REST API
 
 Date:
@@ -965,3 +967,115 @@ Related Documentation:
 - API.md
 - DEVELOPMENT.md
 - DESIGN_SYSTEM.md
+
+
+## CHANGE-0004 — Establish V1 React Frontend Foundation
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+feature
+
+Requirement:
+ARCHITECTURE.md §§2, 6, 7, 8, and 13 requires React, Vite, React Router,
+Axios, a decoupled REST client, and documented public routes. REQUIREMENTS.md
+§§2, 4, and 11 requires the public-site foundation and responsive support.
+DESIGN_SYSTEM.md §§9-13, 27-33, 38, and 46-49 defines the brand tokens,
+responsive layout, accessibility, component, and motion principles.
+
+Reason:
+The frontend was the default Vite starter and did not provide the shared
+application shell, public routes, API client, design system, or reusable
+components needed for later page implementation.
+
+Files Changed:
+- frontend/package.json
+- frontend/package-lock.json
+- frontend/.env.example
+- frontend/src/main.jsx
+- frontend/src/App.jsx
+- frontend/src/index.css
+- frontend/src/components/{Button,Footer,LoadingState,Navbar,NotFound,
+  PageContainer,SectionHeading,components}.jsx/css
+- frontend/src/pages/FoundationPage.jsx
+- frontend/src/routes/AppRoutes.jsx
+- frontend/src/services/api.js
+- .gitignore
+
+Components Created:
+- Navbar, Footer, Button, SectionHeading, PageContainer, LoadingState, NotFound
+- FoundationPage placeholder and App application shell.
+
+Code Location:
+- frontend/src/index.css: lines 1-78
+- frontend/src/App.jsx: lines 1-35
+- frontend/src/routes/AppRoutes.jsx: lines 1-49
+- frontend/src/services/api.js: lines 1-8
+- frontend/src/components/*.jsx: lines 1-48
+- frontend/src/components/components.css: lines 1-32
+
+Implementation:
+Replaced the Vite demo with a responsive React Router shell and minimal
+placeholders for every documented public route. Added a centralized Axios
+client using VITE_API_BASE_URL, a tracked safe environment example, central
+CSS tokens from the Alliance Yuwa Club design palette, an accessible responsive
+navbar/footer, and a small Framer Motion route transition that honors reduced
+motion preferences.
+
+Why This Approach:
+Used native CSS variables, React Router, Axios, and one small Framer Motion
+transition rather than a UI framework, global state library, or animation
+system. This gives later pages a coherent foundation without prematurely
+designing their finished content.
+
+Dependencies Added:
+- react-router-dom — required documented client-side routing.
+- axios — required documented centralized REST client.
+- framer-motion — required documented purposeful motion foundation.
+
+Database Changes:
+None.
+
+API Foundation Changes:
+- Added frontend/src/services/api.js with VITE_API_BASE_URL support.
+- No resource-specific client methods or additional backend APIs were added.
+
+Frontend Changes:
+- Added all documented public client routes: /, /about, /activities,
+  /activities/:slug, /events, /events/:slug, /news, /news/:slug, /team,
+  /membership, and /contact.
+- No complete page designs, homepage sections, or forms were implemented.
+
+Motion Decisions:
+- A single opacity/vertical route transition is used for continuity.
+- Framer Motion's useReducedMotion and a CSS reduced-motion override prevent
+  unnecessary animation for users who request it.
+
+Verification:
+- npm run lint — passed.
+- npm run build — passed.
+
+Unnecessary Alternatives Considered:
+Did not add a UI kit, Tailwind, icon library, Redux, Zustand, React Query,
+form library, global state, Three.js, WebGL, Lenis, page-specific API services,
+or complete page UI.
+
+Assumptions:
+- No approved logo asset exists in the frontend yet, so the navbar uses a
+  textual wordmark rather than inventing or altering logo artwork.
+- VITE_API_BASE_URL defaults to the local Django API when not configured; the
+  production API URL must be supplied through deployment environment variables.
+
+Related Documentation:
+- REQUIREMENTS.md
+- ARCHITECTURE.md
+- DATABASE.md
+- API.md
+- DEVELOPMENT.md
+- DESIGN_SYSTEM.md
+
+---
