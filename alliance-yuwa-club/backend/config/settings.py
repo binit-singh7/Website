@@ -12,7 +12,10 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 import os
 import secrets
+import dj_database_url
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,13 +25,108 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 
-def get_list_setting(name, default=""):
-    """Return a comma-separated environment variable as a list."""
+def get_list_setting(name, default="", environment=None):
+    """Return a comma-separated environment variable as a list.
+
+    Values are split on commas, trimmed of surrounding whitespace, and any
+    empty entries are dropped so a trailing comma or stray spaces inside an
+    environment string (for example
+    ``https://allianceyuwaclub.org.np, https://*.vercel.app,``) never produce
+    blank host/origin entries. An optional ``environment`` mapping makes the
+    parser directly testable, mirroring ``get_boolean_setting``.
+    """
+    environment = os.environ if environment is None else environment
     return [
         value.strip()
-        for value in os.environ.get(name, default).split(",")
+        for value in environment.get(name, default).split(",")
         if value.strip()
     ]
+
+
+def get_boolean_setting(name, default=False, environment=None):
+    """Return an environment flag without requiring a dotenv dependency."""
+    environment = os.environ if environment is None else environment
+    value = environment.get(name)
+    if value is None:
+        return default
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
+def get_media_storage_configuration(environment=None):
+    """Return the local or Supabase S3 media-storage settings."""
+    environment = os.environ if environment is None else environment
+    staticfiles_storage = {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    }
+
+    if not get_boolean_setting(
+        "USE_SUPABASE_STORAGE", default=False, environment=environment
+    ):
+        return {
+            "media_url": "/media/",
+            "storages": {
+                "default": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage",
+                },
+                "staticfiles": staticfiles_storage,
+            },
+        }
+
+    required_settings = (
+        "SUPABASE_STORAGE_BUCKET",
+        "SUPABASE_S3_ACCESS_KEY_ID",
+        "SUPABASE_S3_SECRET_ACCESS_KEY",
+        "SUPABASE_S3_ENDPOINT_URL",
+    )
+    missing_settings = [
+        setting for setting in required_settings if not environment.get(setting)
+    ]
+    if missing_settings:
+        raise ImproperlyConfigured(
+            "Missing Supabase Storage environment variables: "
+            + ", ".join(missing_settings)
+        )
+
+    bucket_name = environment["SUPABASE_STORAGE_BUCKET"]
+    endpoint_url = environment["SUPABASE_S3_ENDPOINT_URL"].rstrip("/")
+    public_media_url = environment.get("SUPABASE_STORAGE_PUBLIC_URL", "").rstrip(
+        "/"
+    )
+    if not public_media_url:
+        public_endpoint = endpoint_url.removesuffix("/s3")
+        public_media_url = f"{public_endpoint}/object/public/{bucket_name}"
+
+    if public_media_url.startswith("https://"):
+        url_protocol = "https:"
+        custom_domain = public_media_url.removeprefix("https://")
+    elif public_media_url.startswith("http://"):
+        url_protocol = "http:"
+        custom_domain = public_media_url.removeprefix("http://")
+    else:
+        raise ImproperlyConfigured(
+            "SUPABASE_STORAGE_PUBLIC_URL must start with http:// or https://."
+        )
+
+    return {
+        "media_url": f"{public_media_url}/",
+        "storages": {
+            "default": {
+                "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+                "OPTIONS": {
+                    "access_key": environment["SUPABASE_S3_ACCESS_KEY_ID"],
+                    "secret_key": environment["SUPABASE_S3_SECRET_ACCESS_KEY"],
+                    "bucket_name": bucket_name,
+                    "endpoint_url": endpoint_url,
+                    "region_name": environment.get("SUPABASE_S3_REGION", "us-east-1"),
+                    "addressing_style": "path",
+                    "querystring_auth": False,
+                    "custom_domain": custom_domain,
+                    "url_protocol": url_protocol,
+                },
+            },
+            "staticfiles": staticfiles_storage,
+        },
+    }
 
 
 # DEBUG defaults to True only for the local development setup.
@@ -46,17 +144,12 @@ ALLOWED_HOSTS = get_list_setting("ALLOWED_HOSTS", "localhost,127.0.0.1")
 
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'postgres'),
-        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
-        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True,
+    )
 }
 # Application definition
 
@@ -115,6 +208,17 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "contact_submission": os.environ.get(
+            "CONTACT_SUBMISSION_THROTTLE_RATE", "5/hour"
+        ),
+        "membership_application": os.environ.get(
+            "MEMBERSHIP_APPLICATION_THROTTLE_RATE", "3/day"
+        ),
+    },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": int(os.environ.get("API_PAGE_SIZE", "12")),
     "PAGE_SIZE_QUERY_PARAM": "page_size",
@@ -149,6 +253,10 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+
+# Initial migrations use BigAutoField for implicit primary keys.
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Password validation
@@ -187,18 +295,45 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
 
-MEDIA_URL = "/media/"
+# Uploaded media is deliberately separate from collectable static assets.
+# Local development uses FileSystemStorage; production can opt into Supabase's
+# S3-compatible object storage through environment-only configuration.
 MEDIA_ROOT = BASE_DIR / "media"
+_media_storage_configuration = get_media_storage_configuration()
+MEDIA_URL = _media_storage_configuration["media_url"]
+STORAGES = _media_storage_configuration["storages"]
 
+# Headers that are safe to enable in every environment.
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+
+# Render terminates TLS at a reverse proxy and forwards the original protocol
+# through the X-Forwarded-Proto header. Trust that header so request.is_secure()
+# and the HTTPS redirects below behave correctly behind the proxy.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+if not DEBUG:
+    # Production security hardening. These settings are only enforced when the
+    # application runs with DEBUG disabled, so local development (which defaults
+    # to DEBUG and plain HTTP) keeps working without any environment variables.
+    # SSL redirect defaults to on but can be turned off via the environment when
+    # the proxy already performs the redirect, avoiding redirect loops.
+    SECURE_SSL_REDIRECT = get_boolean_setting("SECURE_SSL_REDIRECT", default=True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = get_boolean_setting(
+        "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False
+    )
+    SECURE_HSTS_PRELOAD = get_boolean_setting("SECURE_HSTS_PRELOAD", default=False)
+    SECURE_REFERRER_POLICY = os.environ.get("SECURE_REFERRER_POLICY", "same-origin")
+else:
+    # Keep local development on plain HTTP with cookies usable over HTTP.
+    SECURE_SSL_REDIRECT = get_boolean_setting("SECURE_SSL_REDIRECT", default=False)
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 
 # Email
