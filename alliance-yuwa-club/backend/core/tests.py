@@ -1,4 +1,5 @@
 from django.test import TestCase
+from rest_framework.test import APITestCase
 
 from .models import Announcement, Organization
 
@@ -21,3 +22,24 @@ class HealthCheckTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
+
+
+class CoreApiTests(APITestCase):
+    def test_organization_returns_public_fields_only(self):
+        Organization.objects.create(name="Alliance Yuwa Club", phone="9800000000")
+
+        response = self.client.get("/api/organization/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["name"], "Alliance Yuwa Club")
+        self.assertNotIn("created_at", response.data)
+        self.assertNotIn("updated_at", response.data)
+
+    def test_active_current_announcements_are_returned(self):
+        Announcement.objects.create(title="Active", content="Visible")
+        Announcement.objects.create(title="Inactive", content="Hidden", is_active=False)
+
+        response = self.client.get("/api/announcements/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["title"] for item in response.data], ["Active"])

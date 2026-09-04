@@ -844,3 +844,124 @@ Related Documentation:
 - API.md
 - DEVELOPMENT.md
 - DESIGN_SYSTEM.md
+
+---
+
+## CHANGE-0003 — Implement V1 Public REST API
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+feature
+
+Requirement:
+API.md §§1-29 defines the V1 public REST endpoints, public-data rules,
+pagination, filtering, membership submission, and contact submission.
+ARCHITECTURE.md §§6-9 requires React-facing data to be served through Django
+REST APIs. DEVELOPMENT.md §§10 and 12 requires documented API behavior and
+tests.
+
+Reason:
+The database foundation existed but no serializers, public API views, or
+application API routes exposed the documented V1 data and form submissions.
+
+Files Changed:
+- backend/config/settings.py
+- backend/config/urls.py
+- backend/core/{serializers.py,views.py,urls.py,tests.py}
+- backend/activities/{serializers.py,views.py,urls.py,tests.py}
+- backend/events/{serializers.py,views.py,urls.py,tests.py}
+- backend/news/{serializers.py,views.py,urls.py,tests.py}
+- backend/team/{serializers.py,views.py,urls.py,tests.py}
+- backend/gallery/{serializers.py,views.py,urls.py,tests.py}
+- backend/memberships/{serializers.py,views.py,urls.py,tests.py}
+- backend/contact/{serializers.py,views.py,urls.py,tests.py}
+
+Serializers / Views / Routes:
+- Public content serializers for organization, announcements, activities,
+  events, news, team, and gallery.
+- Public ListAPIView/RetrieveAPIView endpoints and CreateAPIView form endpoints.
+- App URL configurations included under /api/.
+
+Code Location:
+- backend/config/settings.py: lines 95-105
+- backend/config/urls.py: lines 18-35
+- backend/*/serializers.py: lines 1-55
+- backend/*/views.py: lines 1-52
+- backend/*/urls.py: lines 1-9
+- backend/*/tests.py: API tests appended through approximately line 90
+
+Implementation:
+Added the documented endpoints: organization, activity categories, activities
+list/detail, events list/detail, news list/detail, team, gallery album
+list/detail, announcements, membership application, and contact submission.
+Configured standard DRF page-number pagination with configurable page size.
+Public querysets restrict activities/news to published records, team to active
+records, gallery to published albums, announcements to active/current records,
+and events to non-draft records. Detail routes use public querysets so private
+slugs return 404. Form serializers exclude all administrative fields and force
+model defaults for pending/unread states.
+
+Why This Approach:
+Used DRF generic views, ModelSerializer, standard pagination, select_related,
+and prefetch_related rather than routers, viewsets, or service abstractions.
+This is the smallest implementation that keeps read operations and public form
+submissions explicit and avoids administrative mutation endpoints.
+
+Dependencies Added:
+None.
+
+Database Changes:
+None. No models or migrations were changed.
+
+API Changes:
+- Added all documented V1 public REST endpoints listed in API.md §28.
+- The existing GET /api/health/ endpoint remains unchanged.
+- No protected administrative mutation endpoints were added.
+
+Frontend Changes:
+None.
+
+Tests:
+- Added API tests for publication filtering, slug 404 behavior, documented
+  filters, pagination, nested images, team ordering/privacy, public
+  organization fields, gallery visibility, membership validation/admin-field
+  protection, contact validation, and the existing health check.
+
+Verification:
+- DEBUG=True python manage.py check — passed.
+- DEBUG=True python manage.py makemigrations --check — no changes detected.
+- DEBUG=True python manage.py test — passed (24 tests).
+- ruff check . — run; reports RUF012 on Django class-level metadata and
+  generated migrations, which is incompatible with standard Django patterns.
+- Focused ruff check with RUF012 excluded — passed.
+- Focused ruff format --check — passed.
+
+Unnecessary Alternatives Considered:
+Did not add django-filter, JWT, viewsets, routers, administrative CRUD APIs,
+custom pagination, search, caching, background jobs, WebSockets, GraphQL, or
+frontend work.
+
+Assumptions:
+- Draft events are excluded from public responses because draft is an internal
+  status, although API.md does not separately state an event publication rule.
+- The public organization endpoint returns the lowest-ID organization record
+  and returns 404 when none exists; no singleton model constraint was added.
+- Membership areas_of_interest accepts API.md's documented JSON list and is
+  stored as comma-separated text because DATABASE.md leaves its storage type
+  unspecified.
+
+Issues Requiring Human Review:
+None.
+
+Related Documentation:
+- REQUIREMENTS.md
+- ARCHITECTURE.md
+- DATABASE.md
+- API.md
+- DEVELOPMENT.md
+- DESIGN_SYSTEM.md

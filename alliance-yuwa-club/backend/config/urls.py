@@ -18,13 +18,21 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 from core.views import health_check
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", health_check, name="health-check"),
+    path("api/", include("core.urls")),
+    path("api/", include("activities.urls")),
+    path("api/", include("events.urls")),
+    path("api/", include("news.urls")),
+    path("api/", include("team.urls")),
+    path("api/", include("memberships.urls")),
+    path("api/", include("gallery.urls")),
+    path("api/", include("contact.urls")),
 ]
 
 if settings.DEBUG:
