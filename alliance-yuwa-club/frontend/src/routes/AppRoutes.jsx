@@ -4,6 +4,7 @@ import App from '../App'
 import LoadingState from '../components/LoadingState'
 import NotFound from '../components/NotFound'
 import FoundationPage from '../pages/FoundationPage'
+import Home from '../pages/Home'
 
 const pageContent = {
   home: ['Alliance Yuwa Club', 'Unity. Leadership. Service.', 'The public website foundation is ready for the club’s verified stories, activities, and community information.'],
@@ -28,7 +29,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route element={<App />}>
-        <Route index element={page('home')} />
+        <Route index element={<Home />} />
         <Route path="about" element={page('about')} />
         <Route path="activities" element={page('activities')} />
         <Route path="activities/:slug" element={page('activity')} />

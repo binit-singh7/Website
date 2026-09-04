@@ -1148,3 +1148,87 @@ Did not redraw, recolor, crop, inline, or duplicate the official logo, and did
 not add an icon or image dependency. The provided SVG is used directly.
 
 ---
+
+## CHANGE-0006 — Implement V1 Public Homepage
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+frontend / visual implementation
+
+Requirement:
+REQUIREMENTS.md §§1, 2, 4.1, 5, 6, 11, and 12 require a responsive public
+homepage that communicates the organization’s purpose, documented history,
+featured activities, impact, and membership/contact paths. DESIGN_SYSTEM.md
+§§3, 7, 11–18, 22, 27–33, 38, and 49 requires an editorial, mobile-first,
+brand-token-based page with purposeful motion and no generic template styling.
+ARCHITECTURE.md §§6, 7, and 14 requires React routes and reusable frontend
+components without direct database access.
+
+Reason:
+The root route displayed only the generic frontend foundation placeholder and
+did not present the club’s documented purpose, activity record, or engagement
+paths.
+
+Files Changed:
+- frontend/src/pages/Home.jsx
+- frontend/src/pages/Home.css
+- frontend/src/routes/AppRoutes.jsx
+- frontend/src/components/components.css
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Added the dedicated Home page and routed `/` to it.
+- Created an asymmetric editorial hero for “Unity. Leadership. Service.” with
+  Biratnagar-focused introduction copy and activity-photo placeholders ready
+  for official imagery.
+- Added verified impact metrics: 6+ years, 100+ community activities, and
+  Biratnagar & Beyond.
+- Added direct linked feature entries for the three documented 2026 programs,
+  including category, date, location, and concise documented summaries.
+- Added a 2020-to-present journey teaser with an activity-archive CTA and a
+  final membership/contact engagement banner.
+- Added a blue `secondary` Button variant using the existing approved primary
+  blue token.
+
+Visual / Motion Decisions:
+The page follows the documented rhythm of typographic hero, metrics, activity
+record, history, and dark community CTA. It uses neutral canvas space, green
+for primary emphasis, blue for supporting action, and orange only as a small
+activity accent. Framer Motion handles restrained entrance and in-view reveals
+plus small card hover lifts; `useReducedMotion` removes positional motion and
+reduces transitions to zero duration.
+
+Dependencies Added:
+None. Existing React Router and Framer Motion dependencies were reused.
+
+Database Changes:
+None.
+
+API Changes:
+None. The initially documented feature data is local presentation content; no
+database or API contract was changed.
+
+Responsive / Accessibility Impact:
+The layout is single-column by default, becomes a composed two-column hero and
+timeline at tablet widths, and uses an asymmetric desktop feature layout.
+Sections use semantic headings, lists, articles, and destination links. The
+visual image frames are clearly labelled as reserved activity-photography
+space, avoiding invented imagery.
+
+Verification:
+- npm.cmd run lint — passed.
+- npm.cmd run build — passed.
+- git diff --check — passed.
+
+Unnecessary Alternatives Considered:
+Did not add stock photography, fabricated impact figures, generic icon sets,
+gradients, additional dependencies, database models, or API endpoints. Actual
+club photography and database-backed featured-content selection can replace
+the labelled placeholders when approved media and content are available.
+
+---
