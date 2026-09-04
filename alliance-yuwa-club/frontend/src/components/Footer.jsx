@@ -14,6 +14,7 @@ function Footer() {
         <nav aria-label="Footer navigation">
           <Link to="/activities">Our Work</Link>
           <Link to="/events">Events</Link>
+          <Link to="/gallery">Gallery</Link>
           <Link to="/contact">Contact</Link>
         </nav>
         <div className="footer__contact">

@@ -1541,3 +1541,65 @@ Verification:
 - `npm.cmd run build` — passed.
 
 ---
+
+## CHANGE-0011 — Implement Public Gallery Module
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+frontend / API integration
+
+Requirement:
+REQUIREMENTS.md §4.9 requires a gallery architecture that accepts published
+photographs over time. ARCHITECTURE.md §§6–8 and 11 requires the React client
+to consume public REST media data. API.md §§14, 21, and 28 defines the public
+gallery-album list/detail contract and its pagination. DESIGN_SYSTEM.md
+§§11–12, 20, 26–33, 35, 38, and 49 requires responsive, real-media-first,
+accessible presentation with purposeful reduced-motion-aware motion.
+
+Files Changed:
+- frontend/src/services/api.js
+- frontend/src/components/GalleryLightbox.jsx
+- frontend/src/components/{Navbar,Footer}.jsx
+- frontend/src/components/components.css
+- frontend/src/pages/{Gallery.jsx,GalleryDetail.jsx,Gallery.css,galleryUtils.js}
+- frontend/src/routes/AppRoutes.jsx
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Added centralized paginated album-list and slug-detail API methods.
+- Added `/gallery` with a responsive published-album archive, cover-image
+  fallbacks, execution dates, photo-count badges, pagination, request errors,
+  and no-content states.
+- Added `/gallery/:slug` with a responsive CSS-column masonry photo layout,
+  image captions, dynamic tags when supplied by public data, return navigation,
+  and unavailable-album states.
+- Added a reusable full-screen lightbox with click-outside closing, Escape,
+  ArrowLeft/ArrowRight photo navigation, focus trapping, focus restoration,
+  scroll locking, and reduced-motion-aware transitions.
+- Added Gallery links in the primary and footer navigation.
+
+API Routes Used:
+- GET `/api/gallery/albums/`
+- GET `/api/gallery/albums/<slug>/`
+
+API Contract Note:
+The documented album-list serializer does not include a photo count or
+category/tag fields. The overview obtains photo counts from its documented
+album-detail requests. Tag filtering is enabled only when public album data
+contains tags/categories, avoiding invented classifications; untagged albums
+remain available chronologically.
+
+Dependencies Added:
+None.
+
+Verification:
+- `npm.cmd run lint` — passed.
+- `npm.cmd run build` — passed.
+- `git diff --check` — passed.
+
+---

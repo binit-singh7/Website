@@ -25,6 +25,17 @@
 .footer__bottom { border-top: var(--border-width) solid color-mix(in srgb, var(--color-surface) 25%, transparent); color: color-mix(in srgb, var(--color-surface) 65%, transparent); font-size: var(--text-xs); padding-block: var(--space-4); }
 .loading-state { color: var(--color-text-muted); min-height: 50vh; padding-block: var(--space-8); }
 .sr-only { clip: rect(0, 0, 0, 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+.gallery-lightbox { align-items: center; background: color-mix(in srgb, var(--color-text) 92%, transparent); display: flex; inset: 0; justify-content: center; padding: var(--space-3); position: fixed; z-index: 20; }
+.gallery-lightbox__dialog { background: var(--color-text); color: var(--color-surface); display: grid; gap: var(--space-3); max-height: calc(100svh - 1.5rem); max-width: 78rem; padding: var(--space-3); width: 100%; }
+.gallery-lightbox__topbar { align-items: center; display: flex; gap: var(--space-3); justify-content: space-between; }
+.gallery-lightbox__topbar p, .gallery-lightbox__caption { color: color-mix(in srgb, var(--color-surface) 80%, transparent); font-size: var(--text-sm); margin: 0; }
+.gallery-lightbox__content { align-items: center; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; min-height: 0; }
+.gallery-lightbox__media { min-height: 0; }
+.gallery-lightbox__image { display: block; height: min(70svh, 48rem); object-fit: contain; width: 100%; }
+.gallery-lightbox__image.media-frame { min-height: 18rem; }
+.gallery-lightbox__button { align-items: center; background: transparent; border: var(--border-width) solid color-mix(in srgb, var(--color-surface) 60%, transparent); color: var(--color-surface); cursor: pointer; display: inline-flex; font-size: 1.4rem; justify-content: center; min-height: 2.75rem; min-width: 2.75rem; }
+.gallery-lightbox__button:hover { background: var(--color-surface); color: var(--color-text); }
+.gallery-lightbox__caption { line-height: 1.5; min-height: 1.5em; }
 
 @media (min-width: 64rem) {
   .navbar__toggle { display: none; }

@@ -11,6 +11,7 @@ const navigation = [
   { label: 'Events', to: '/events' },
   { label: 'News', to: '/news' },
   { label: 'Team', to: '/team' },
+  { label: 'Gallery', to: '/gallery' },
 ]
 
 function Navbar() {

@@ -67,6 +67,17 @@ export function submitContactMessage(message) {
   return api.post('/contact/', message).then((response) => response.data)
 }
 
+export function fetchGalleryAlbums({ page, pageSize } = {}) {
+  return requestCollection('/gallery/albums/', {
+    page: page || undefined,
+    page_size: pageSize || undefined,
+  })
+}
+
+export function fetchGalleryAlbum(slug) {
+  return api.get(`/gallery/albums/${slug}/`).then((response) => response.data)
+}
+
 export function mediaUrl(path) {
   return path ? new URL(path, api.defaults.baseURL).href : null
 }

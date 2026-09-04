@@ -9,6 +9,8 @@ import About from '../pages/About'
 import Contact from '../pages/Contact'
 import EventDetail from '../pages/EventDetail'
 import Events from '../pages/Events'
+import Gallery from '../pages/Gallery'
+import GalleryDetail from '../pages/GalleryDetail'
 import Home from '../pages/Home'
 import Membership from '../pages/Membership'
 import News from '../pages/News'
@@ -28,6 +30,8 @@ function AppRoutes() {
         <Route path="news" element={<News />} />
         <Route path="news/:slug" element={<NewsDetail />} />
         <Route path="team" element={<Team />} />
+        <Route path="gallery" element={<Gallery />} />
+        <Route path="gallery/:slug" element={<GalleryDetail />} />
         <Route path="membership" element={<Membership />} />
         <Route path="contact" element={<Contact />} />
         <Route path="loading" element={<LoadingState />} />
