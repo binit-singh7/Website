@@ -1,8 +1,13 @@
 from datetime import date
+from tempfile import TemporaryDirectory
 
-from django.test import TestCase
+from django.contrib.admin.sites import AdminSite
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import RequestFactory, TestCase, override_settings
+from django.utils.datastructures import MultiValueDict
 from rest_framework.test import APITestCase
 
+from .admin import GalleryAlbumAdmin, GalleryAlbumAdminForm
 from .models import GalleryAlbum, GalleryImage
 
 
@@ -16,6 +21,46 @@ class GalleryModelTests(TestCase):
         self.assertFalse(album.is_published)
         album.delete()
         self.assertFalse(GalleryImage.objects.filter(pk=image.pk).exists())
+
+
+class GalleryAdminTests(TestCase):
+    def setUp(self):
+        self.media_directory = TemporaryDirectory()
+        self.media_override = override_settings(MEDIA_ROOT=self.media_directory.name)
+        self.media_override.enable()
+
+    def tearDown(self):
+        self.media_override.disable()
+        self.media_directory.cleanup()
+
+    def test_batch_upload_creates_ordered_album_images(self):
+        album = GalleryAlbum.objects.create(
+            title="Youth Day", slug="youth-day", date=date(2026, 8, 12)
+        )
+        first_image = SimpleUploadedFile("first.jpg", b"first image")
+        second_image = SimpleUploadedFile("second.jpg", b"second image")
+        form = GalleryAlbumAdminForm(
+            data={
+                "title": album.title,
+                "slug": album.slug,
+                "date": album.date.isoformat(),
+            },
+            files=MultiValueDict({"batch_images": [first_image, second_image]}),
+            instance=album,
+        )
+
+        self.assertTrue(form.is_valid())
+        form.save(commit=False).save()
+
+        request = RequestFactory().post("/")
+        request._files = MultiValueDict({"batch_images": [first_image, second_image]})
+        GalleryAlbumAdmin(GalleryAlbum, AdminSite()).save_related(
+            request, form, [], change=True
+        )
+
+        images = list(GalleryImage.objects.filter(album=album))
+        self.assertEqual(len(images), 2)
+        self.assertEqual([image.display_order for image in images], [0, 1])
 
 
 class GalleryApiTests(APITestCase):

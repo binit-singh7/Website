@@ -1603,3 +1603,50 @@ Verification:
 - `git diff --check` — passed.
 
 ---
+
+## CHANGE-0012 — Add Gallery Album Batch Uploads in Django Admin
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+backend / Django admin
+
+Requirement:
+The production gallery-administration task requires multi-file image uploads
+while preserving individual image management. ARCHITECTURE.md §11 assigns the
+gallery app responsibility for albums, images, and image ordering.
+
+Files Changed:
+- backend/gallery/admin.py
+- backend/gallery/tests.py
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Added `GalleryAlbumAdminForm` with the optional `batch_images` non-model
+  field, labelled “Batch Upload Images (Select Multiple Files)”.
+- Added Django-supported `MultipleFileInput` and `MultipleFileField` wrappers
+  so the ClearableFileInput correctly accepts multiple selected files.
+- Added `GalleryImageInline` as a tabular inline for individual image review,
+  captions, reordering, additions, and deletion.
+- Extended `GalleryAlbumAdmin.save_related` to append every
+  `request.FILES.getlist("batch_images")` file as a `GalleryImage` linked to
+  the saved album. Uploaded images receive consecutive display-order values
+  after existing inline images.
+- Added automated coverage for the multi-file save flow and image ordering.
+
+Dependencies Added:
+None.
+
+Database Changes:
+None.
+
+Verification:
+- `python manage.py check` — passed with no errors. The project still reports
+  13 pre-existing `models.W042` `DEFAULT_AUTO_FIELD` warnings across apps.
+- `python manage.py test gallery` — passed (3 tests).
+
+---
