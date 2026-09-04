@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { useState } from 'react'
 
 import Button from '../components/Button'
+import Seo from '../components/Seo'
 import { submitMembershipApplication } from '../services/api'
 import {
   getSubmissionErrors,
@@ -122,6 +123,11 @@ function Membership() {
 
   return (
     <div className="form-page">
+      <Seo
+        title="Membership"
+        description="Apply to join Alliance Yuwa Club and take part in community service, environmental action, culture, sports, and youth leadership in Biratnagar."
+        path="/membership"
+      />
       <section className="form-page__hero">
         <div className="page-container form-page__hero-grid">
           <motion.header initial="hidden" animate="visible" variants={reveal} transition={transition}>

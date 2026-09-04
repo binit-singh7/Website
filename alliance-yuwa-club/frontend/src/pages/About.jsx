@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import './EditorialPages.css'
 
 const values = ['Unity', 'Leadership', 'Service']
@@ -11,6 +12,11 @@ function About() {
 
   return (
     <div className="editorial-page">
+      <Seo
+        title="About"
+        description="Learn about Alliance Yuwa Club, a youth-led organization in Biratnagar serving the community through leadership, civic awareness, culture, sport, and service since 2020."
+        path="/about"
+      />
       <section className="page-container about-hero" aria-labelledby="about-title">
         <motion.div initial={reveal} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.45 }}>
           <p className="content-eyebrow">About Alliance Yuwa Club</p>

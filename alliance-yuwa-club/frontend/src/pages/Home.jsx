@@ -6,6 +6,7 @@ import generalConvention from '../assets/images/general-convention.jpg'
 import heroCommunity from '../assets/images/hero-community.jpg'
 import womensSports from '../assets/images/womens-sports-festival.jpg'
 import Button from '../components/Button'
+import Seo from '../components/Seo'
 import './Home.css'
 
 const featuredActivities = [
@@ -61,6 +62,10 @@ function Home() {
 
   return (
     <div className="home-page">
+      <Seo
+        description="Alliance Yuwa Club is a youth-led community organization in Biratnagar, Nepal, uniting young people through service, leadership, culture, sports, and civic action."
+        path="/"
+      />
       <section className="home-hero" aria-labelledby="home-hero-title">
         <div className="page-container home-hero__grid">
           <motion.div

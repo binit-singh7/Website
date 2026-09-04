@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 
 import Button from '../components/Button'
+import Seo from '../components/Seo'
 import { fetchOrganization, submitContactMessage } from '../services/api'
 import { getSubmissionErrors, getSubmissionMessage, isValidEmail, required } from './formUtils'
 import './FormPages.css'
@@ -81,6 +82,11 @@ function Contact() {
 
   return (
     <div className="form-page">
+      <Seo
+        title="Contact"
+        description="Contact Alliance Yuwa Club in Biratnagar for questions, ideas, partnerships, or to get involved with our community work."
+        path="/contact"
+      />
       <section className="form-page__hero form-page__hero--contact">
         <div className="page-container">
           <motion.header className="form-page__hero-copy" initial="hidden" animate="visible" variants={reveal} transition={transition}>

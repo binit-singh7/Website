@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import LoadingState from '../components/LoadingState'
 import MediaFrame from '../components/MediaFrame'
+import Seo from '../components/Seo'
 import { fetchGalleryAlbum, fetchGalleryAlbums } from '../services/api'
 import { collectionResult, formatDate } from './contentUtils'
 import { getAlbumTags, getPhotoCount } from './galleryUtils'
@@ -54,6 +55,11 @@ function Gallery() {
 
   return (
     <div className="gallery-page">
+      <Seo
+        title="Gallery"
+        description="Browse published photographs from Alliance Yuwa Club activities, gatherings, and community action in Biratnagar."
+        path="/gallery"
+      />
       <header className="page-container gallery-intro">
         <p className="content-eyebrow">Gallery</p>
         <h1>The moments behind the work.</h1>
