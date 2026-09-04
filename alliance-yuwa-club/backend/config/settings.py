@@ -104,7 +104,12 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = get_list_setting(
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1",
+    default=(
+        "localhost,127.0.0.1,"
+        "allianceyuwaclub.org.np,"
+        "api.allianceyuwaclub.org.np,"
+        "www.allianceyuwaclub.org.np"
+    ),
 )
 
 
