@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
+import logo from '../assets/logo.svg'
 import Button from './Button'
 import './components.css'
 
@@ -19,8 +20,8 @@ function Navbar() {
   return (
     <header className="navbar">
       <div className="page-container navbar__inner">
-        <NavLink className="wordmark" to="/" onClick={closeMenu}>
-          <span>Alliance</span><span>Yuwa Club</span>
+        <NavLink className="wordmark" to="/" onClick={closeMenu} aria-label="Alliance Yuwa Club home">
+          <img className="wordmark__logo" src={logo} alt="Alliance Yuwa Club Logo" />
         </NavLink>
         <button
           className="navbar__toggle"

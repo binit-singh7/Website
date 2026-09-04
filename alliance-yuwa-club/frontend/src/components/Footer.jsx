@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import logo from '../assets/logo.svg'
 import './components.css'
 
 function Footer() {
@@ -7,7 +8,7 @@ function Footer() {
     <footer className="footer">
       <div className="page-container footer__grid">
         <div>
-          <p className="footer__name">Alliance Yuwa Club</p>
+          <img className="footer__logo" src={logo} alt="Alliance Yuwa Club Logo" />
           <p className="footer__motto">Unity, Leadership, and Service.</p>
         </div>
         <nav aria-label="Footer navigation">

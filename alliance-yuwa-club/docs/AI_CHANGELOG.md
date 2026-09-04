@@ -1079,3 +1079,72 @@ Related Documentation:
 - DESIGN_SYSTEM.md
 
 ---
+
+## CHANGE-0005 — Integrate Official Organization Logo
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+frontend / accessibility
+
+Requirement:
+The approved production website task requires the official asset at
+`frontend/src/assets/logo.svg` to replace the navbar wordmark, appear in the
+footer brand column, provide the favicon and social-image metadata, remain
+responsive without distortion, and have accessible alternative text.
+
+Reason:
+The shared application shell used a temporary textual wordmark and the Vite
+favicon. The supplied official logo must be the consistent brand representation
+in the site chrome and metadata.
+
+Files Changed:
+- frontend/src/assets/logo.svg
+- frontend/src/components/Navbar.jsx
+- frontend/src/components/Footer.jsx
+- frontend/src/components/components.css
+- frontend/index.html
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Imported `logo.svg` through Vite-relative component imports in Navbar and
+  Footer.
+- Replaced the textual navbar wordmark and added the logo above the footer
+  motto.
+- Applied fixed logo heights with `width: auto` so the native square aspect
+  ratio is preserved on mobile and desktop.
+- Set favicon, shortcut icon, Open Graph image, and Twitter image metadata to
+  the same Vite-managed SVG asset.
+- Added the semantic alt text `Alliance Yuwa Club Logo` to both rendered image
+  elements.
+
+Dependencies Added:
+None.
+
+Database Changes:
+None.
+
+API Changes:
+None.
+
+Responsive / Accessibility Impact:
+The navbar logo is constrained to 2.75rem high and cannot consume flexible
+navigation space; the footer logo is 4.5rem high. Both use automatic widths to
+avoid stretching. The home link has an explicit accessible label and each logo
+image has meaningful alternative text.
+
+Verification:
+- npm.cmd run lint — passed.
+- npm.cmd run build — passed; Vite emitted the logo asset and rewrote the
+  favicon and social metadata URLs for production.
+- git diff --check — passed.
+
+Unnecessary Alternatives Considered:
+Did not redraw, recolor, crop, inline, or duplicate the official logo, and did
+not add an icon or image dependency. The provided SVG is used directly.
+
+---
