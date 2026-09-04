@@ -3,8 +3,16 @@ import { Route, Routes } from 'react-router-dom'
 import App from '../App'
 import LoadingState from '../components/LoadingState'
 import NotFound from '../components/NotFound'
+import Activities from '../pages/Activities'
+import ActivityDetail from '../pages/ActivityDetail'
+import About from '../pages/About'
+import EventDetail from '../pages/EventDetail'
+import Events from '../pages/Events'
 import FoundationPage from '../pages/FoundationPage'
 import Home from '../pages/Home'
+import News from '../pages/News'
+import NewsDetail from '../pages/NewsDetail'
+import Team from '../pages/Team'
 
 const pageContent = {
   home: ['Alliance Yuwa Club', 'Unity. Leadership. Service.', 'The public website foundation is ready for the club’s verified stories, activities, and community information.'],
@@ -30,14 +38,14 @@ function AppRoutes() {
     <Routes>
       <Route element={<App />}>
         <Route index element={<Home />} />
-        <Route path="about" element={page('about')} />
-        <Route path="activities" element={page('activities')} />
-        <Route path="activities/:slug" element={page('activity')} />
-        <Route path="events" element={page('events')} />
-        <Route path="events/:slug" element={page('event')} />
-        <Route path="news" element={page('news')} />
-        <Route path="news/:slug" element={page('article')} />
-        <Route path="team" element={page('team')} />
+        <Route path="about" element={<About />} />
+        <Route path="activities" element={<Activities />} />
+        <Route path="activities/:slug" element={<ActivityDetail />} />
+        <Route path="events" element={<Events />} />
+        <Route path="events/:slug" element={<EventDetail />} />
+        <Route path="news" element={<News />} />
+        <Route path="news/:slug" element={<NewsDetail />} />
+        <Route path="team" element={<Team />} />
         <Route path="membership" element={page('membership')} />
         <Route path="contact" element={page('contact')} />
         <Route path="loading" element={<LoadingState />} />

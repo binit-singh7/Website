@@ -1,6 +1,10 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
+import borderCleanliness from '../assets/images/border-cleanliness.jpg'
+import generalConvention from '../assets/images/general-convention.jpg'
+import heroCommunity from '../assets/images/hero-community.jpg'
+import womensSports from '../assets/images/womens-sports-festival.jpg'
 import Button from '../components/Button'
 import './Home.css'
 
@@ -13,6 +17,8 @@ const featuredActivities = [
     summary: 'A community cleanup and plastics collection drive coordinated with local volunteers, Nepal Police, and metropolitan waste management.',
     to: '/activities/international-youth-day-border-cleanliness-awareness-drive',
     tone: 'green',
+    image: borderCleanliness,
+    imageAlt: 'Volunteers during the International Youth Day border cleanliness drive',
   },
   {
     category: 'Youth & Leadership',
@@ -22,6 +28,8 @@ const featuredActivities = [
     summary: 'The club’s first general convention formalized leadership roles and the executive committee through an internal election.',
     to: '/events/first-general-convention-adhibheshana',
     tone: 'blue',
+    image: generalConvention,
+    imageAlt: 'Participants at the Alliance Yuwa Club general convention',
   },
   {
     category: 'Sports & Culture',
@@ -31,6 +39,8 @@ const featuredActivities = [
     summary: 'A community program bringing youth together through sports, participation, and cultural preservation.',
     to: '/activities/womens-sports-cultural-festival-2083',
     tone: 'orange',
+    image: womensSports,
+    imageAlt: 'Participants at the Women’s Sports and Cultural Festival 2083',
   },
 ]
 
@@ -70,15 +80,12 @@ function Home() {
           </motion.div>
           <motion.aside
             className="home-hero__visual"
-            aria-label="Reserved space for Alliance Yuwa Club field activity photography"
             initial="hidden"
             animate="visible"
             variants={reveal}
             transition={{ ...transition, delay: shouldReduceMotion ? 0 : 0.12 }}
           >
-            <div className="home-hero__visual-label">Field activity photograph</div>
-            <p>Real club photography will bring this record of service into view.</p>
-            <span className="home-hero__visual-index" aria-hidden="true">01 / 03</span>
+            <img className="home-hero__image" src={heroCommunity} alt="Alliance Yuwa Club youth volunteers in Biratnagar" />
           </motion.aside>
         </div>
       </section>
@@ -129,8 +136,8 @@ function Home() {
               whileHover={hover}
             >
               <Link className="activity-feature__link" to={activity.to}>
-                <div className="activity-feature__image" aria-hidden="true">
-                  <span>Activity photograph</span>
+                <div className="activity-feature__image">
+                  <img src={activity.image} alt={activity.imageAlt} loading="lazy" />
                 </div>
                 <div className="activity-feature__body">
                   <p className="activity-feature__category">{activity.category}</p>

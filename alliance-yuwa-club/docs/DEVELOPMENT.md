@@ -386,6 +386,9 @@ Explain significant changes when requested.
 Report assumptions when requirements are unclear.
 Avoid silently changing documented requirements.
 Prefer simple maintainable implementations.
+
+Sample Image Rule: Whenever a component or page requires an image, reference standard filenames from frontend/src/assets/images/sample-[name].jpg or use inline SVG placeholders. Never hardcode unmapped image paths or fail builds if physical assets are missing; provide a styled fallback element or standard sample asset reference.
+
 19. AI Agent Workflow
 
 Before implementing a feature, the AI agent should:

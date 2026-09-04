@@ -1232,3 +1232,249 @@ club photography and database-backed featured-content selection can replace
 the labelled placeholders when approved media and content are available.
 
 ---
+
+## CHANGE-0007 — Connect Activities and Events to the Public API
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+frontend / API integration
+
+Requirement:
+REQUIREMENTS.md §§4.3, 4.4, 6, 11, and 12 requires a responsive,
+database-driven activity archive with category/date support and public
+upcoming/past event information. API.md §§6–8 and 21–23 defines the public
+activity/event list, detail, pagination, and filtering contracts.
+ARCHITECTURE.md §§6–8 and 14 requires React to consume Django REST APIs via a
+central client without directly accessing the database. DESIGN_SYSTEM.md
+§§11–12, 17–19, 27–33, 38, and 49 requires responsive editorial content,
+purposeful motion, and accessible interaction.
+
+Reason:
+The `/activities`, `/activities/:slug`, `/events`, and `/events/:slug` routes
+were generic placeholders and did not expose the public content API.
+
+Files Changed:
+- frontend/src/services/api.js
+- frontend/src/components/MediaFrame.jsx
+- frontend/src/pages/contentUtils.js
+- frontend/src/pages/{Activities,ActivityDetail,Events,EventDetail}.jsx
+- frontend/src/pages/ContentPages.css
+- frontend/src/routes/AppRoutes.jsx
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Added central API functions for activity categories, activities, activity
+  details, events, and event details. List methods support the documented
+  category, year, status, page, and page_size query parameters.
+- Replaced the four placeholder routes with REST-backed archive/list and detail
+  pages, including pagination, request errors, unavailable-record states, and
+  no-content states.
+- Added an accessible activity category toolbar, a 2020–2026 year timeline,
+  chronological activity cards, and direct slug-based navigation.
+- Added activity and event detail layouts with API-sourced descriptions, dates,
+  locations, cover media, and dynamic image galleries.
+- Added dynamic event status indicators for upcoming, ongoing, completed, and
+  cancelled records, plus optional API-backed registration links.
+- Added a reusable media frame that renders published images when present and
+  clearly labelled structural placeholders otherwise.
+
+Data Limitation:
+The public Activity serializer does not expose partners or organizers. The
+activity detail page therefore includes that required section with an explicit
+public-record fallback instead of inventing unverified collaborators.
+
+Visual / Motion Decisions:
+The archive uses an editorial timeline and bordered image/text records instead
+of a generic card wall. Existing design tokens drive all colours. Framer Motion
+provides small list entrances and hover lifts; `useReducedMotion` disables the
+positional motion and transitions for users who request reduced motion.
+
+Dependencies Added:
+None.
+
+Database Changes:
+None.
+
+API Changes:
+None. The existing documented public endpoints are consumed without changing
+their schema, routes, filtering behavior, or permissions.
+
+Responsive / Accessibility Impact:
+The layouts are single-column on mobile, become two-column for event records
+and galleries on tablet, and use three-column activity/gallery layouts on
+desktop. Filters are native keyboard-operable buttons in labelled toolbars with
+`aria-pressed` state; semantic articles, headings, navigation, descriptions,
+and meaningful image alt text are used throughout.
+
+Verification:
+- npm.cmd run lint — passed.
+- npm.cmd run build — passed.
+- git diff --check — passed.
+
+Unnecessary Alternatives Considered:
+Did not hardcode activity or event records, add a client-side database/cache,
+change Django models or API endpoints, add stock photography, introduce an
+icon library, or add dependencies. Organization images and partner data remain
+API-driven and will appear when published by the club.
+
+---
+
+## CHANGE-0008 — Add Official Homepage Activity Photography
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+frontend / visual implementation
+
+Requirement:
+The approved production task requires the provided static photographs to be
+imported into the homepage hero and the three documented featured-activity
+records. DESIGN_SYSTEM.md §§20, 26, 38, 42, and 49 requires real organization
+photography, responsive image treatment, meaningful alternative text, and
+design-token-based implementation.
+
+Reason:
+The Home page used clearly labelled visual placeholders while awaiting official
+photographs. The supplied club images now allow those placeholders to represent
+actual Alliance Yuwa Club people and activities.
+
+Files Changed:
+- frontend/src/assets/images/{hero-community,border-cleanliness,general-convention,womens-sports-festival}.jpg
+- frontend/src/pages/Home.jsx
+- frontend/src/pages/Home.css
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Imported the four supplied JPEGs through Vite-compatible relative imports.
+- Replaced the hero’s structural placeholder with `hero-community.jpg` and the
+approved alt text: “Alliance Yuwa Club youth volunteers in Biratnagar”.
+- Mapped each activity photo to its matching featured-activity card.
+- Applied `object-fit: cover`, token-based medium border radii, overflow
+containment, and a small image-scale hover treatment for activity cards.
+
+Dependencies Added:
+None.
+
+Database Changes:
+None.
+
+API Changes:
+None.
+
+Responsive / Accessibility Impact:
+Each image fills its existing responsive frame without stretching. The hero
+and activity cards maintain their mobile and desktop heights, and the activity
+images use concise descriptive alternative text. Reduced-motion users retain
+the static image treatment through the existing global motion preference rule.
+
+Verification:
+- npm.cmd run lint — passed.
+- npm.cmd run build — passed; all four JPEG imports were emitted as production
+  assets.
+
+Unnecessary Alternatives Considered:
+Did not crop, recolor, generate, or replace the supplied photos, and did not
+add an image-processing dependency. The original static assets are used
+directly through Vite.
+
+---
+
+## CHANGE-0009 — Add About, Team, and News Public Pages
+
+Date:
+2026-09-04
+
+Agent:
+OpenAI Codex
+
+Type:
+frontend / API integration
+
+Requirement:
+REQUIREMENTS.md §§4.2, 4.5, 4.6, 11, and 12 requires public About, Team, and
+News pages with responsive presentation of the club story, team, and published
+updates. API.md §§9–10, 21, and 23 defines the public news/team API behavior.
+ARCHITECTURE.md §§6–8 requires the React client to use the Django REST API.
+DESIGN_SYSTEM.md §§10–12, 20–21, 27–33, 38, and 49 requires editorial,
+responsive, accessible content and purposeful motion.
+
+Reason:
+The affected routes used generic foundation placeholders and did not render
+the available public team or news content.
+
+Files Changed:
+- frontend/src/services/api.js
+- frontend/src/components/MediaFrame.jsx
+- frontend/src/pages/{About,Team,News,NewsDetail}.jsx
+- frontend/src/pages/EditorialPages.css
+- frontend/src/pages/ContentPages.css
+- frontend/src/routes/AppRoutes.jsx
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Added centralized news list/detail and executive-team client methods.
+- Implemented the About page with the documented Shanti Yuwa Club transition,
+  Biratnagar history, mission, vision, and Unity/Leadership/Service values.
+- Implemented a REST-backed executive committee grid with role, biography,
+  published portrait, and verified-social-link fallback states.
+- Implemented paginated news cards and detail pages with dates, reading-time
+  estimates, API article media, content rendering, return navigation, and
+  loading/error/empty/404 states.
+- Added an error-safe MediaFrame: failed API image requests now render a
+  labelled inline SVG fallback rather than a broken image.
+
+API Endpoint Resolution:
+The requested `/api/v1/team/` path is not part of API.md and does not exist in
+the Django route configuration. The implementation uses the documented and
+implemented public endpoint `/api/team/` through the existing `/api` base URL.
+No backend endpoint was changed.
+
+Sample Asset References:
+`sample-hero.jpg`, `sample-avatar.jpg`, and `sample-news.jpg` are not present
+in `frontend/src/assets/images/`. The documented sample-image convention allows
+fallback SVG renders, so MediaFrame supplies a labelled SVG image fallback for
+the About hero, unavailable team photos, unavailable news images, and failed
+media requests. No missing local image path is imported.
+
+Visual / Motion Decisions:
+The About view alternates open editorial space with a single dark-history
+section. Team and news use restrained records with real media priority rather
+than generic application cards. Existing Framer Motion transitions provide
+small entrances and hover lifts; `useReducedMotion` disables positional motion
+and transitions.
+
+Dependencies Added:
+None.
+
+Database Changes:
+None.
+
+API Changes:
+None. The existing public API contract is consumed directly.
+
+Responsive / Accessibility Impact:
+Each page starts as a single-column mobile layout and progresses to two/three
+columns at tablet/desktop widths. Semantic headings, article elements, time
+elements, accessible loading/error states, and meaningful image alt/fallback
+labels are provided throughout.
+
+Verification:
+- npm.cmd run lint — passed.
+- npm.cmd run build — passed.
+
+Unnecessary Alternatives Considered:
+Did not add nonexistent `/api/v1/` routes, hardcode team/news records, expose
+private team contact details, invent social links or article categories, add
+stock images, or create sample JPEG assets. Public content remains API-driven
+and the fallback SVG handles unavailable media safely.
+
+---
