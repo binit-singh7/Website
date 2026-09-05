@@ -3,7 +3,7 @@
 .about-hero > div { display: grid; align-content: center; gap: var(--space-4); }
 .about-hero h1, .editorial-intro h1, .news-detail__header h1 { font-family: var(--font-display); font-size: var(--text-display); letter-spacing: -0.06em; line-height: 0.9; margin: 0; }
 .about-hero > div > p:last-child, .editorial-intro > p:last-child { color: var(--color-text-muted); font-size: var(--text-lg); line-height: 1.55; margin: 0; max-width: 40rem; }
-.about-hero__media { height: clamp(19rem, 45vw, 32rem); }
+.about-hero__media { display: block; height: clamp(19rem, 45vw, 32rem); max-width: 100%; object-fit: cover; width: 100%; }
 .about-story { background: var(--color-surface); margin-top: clamp(4rem, 9vw, 8rem); padding-block: clamp(4rem, 8vw, 7rem); }
 .about-story__grid, .about-history__grid { display: grid; gap: var(--space-6); }
 .about-story h2, .about-history h2, .about-values h2, .about-direction h2 { font-family: var(--font-display); font-size: var(--text-xl); letter-spacing: -0.045em; line-height: 0.95; margin: var(--space-2) 0 0; }
