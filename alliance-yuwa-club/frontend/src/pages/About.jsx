@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import MediaFrame from '../components/MediaFrame'
 import Seo from '../components/Seo'
 import './EditorialPages.css'
+import aboutImg from '../assets/club-photo.jpg'
 
 const values = ['Unity', 'Leadership', 'Service']
 
@@ -23,7 +24,12 @@ function About() {
           <h1 id="about-title">A youth-led record of service in Biratnagar.</h1>
           <p>Alliance Yuwa Club brings young people together around community action, leadership, civic awareness, culture, sport, and service.</p>
         </motion.div>
-        <MediaFrame className="about-hero__media" label="Alliance Yuwa Club community photograph" alt="Alliance Yuwa Club community activity" />
+        <MediaFrame
+          className="about-hero__media"
+          src={aboutImg}
+          label="Alliance Yuwa Club community photograph"
+          alt="Alliance Yuwa Club community activity"
+        />      
       </section>
 
       <section className="about-story" aria-labelledby="story-title">
