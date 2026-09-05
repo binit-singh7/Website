@@ -101,6 +101,13 @@ SUPABASE_STORAGE_BUCKET
 SUPABASE_S3_ACCESS_KEY_ID
 SUPABASE_S3_SECRET_ACCESS_KEY
 SUPABASE_S3_ENDPOINT_URL
+EMAIL_BACKEND
+EMAIL_HOST
+EMAIL_PORT
+EMAIL_USE_TLS
+EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD
+DEFAULT_FROM_EMAIL
 
 A local .env file may be used during development.
 
@@ -120,6 +127,21 @@ configuration.
 
 When DEBUG=False, DATABASE_URL, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS,
 CSRF_TRUSTED_ORIGINS, and durable media storage configuration are required.
+
+Gmail SMTP configuration:
+
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=allianceyuwaclub@gmail.com
+EMAIL_HOST_PASSWORD=<GMAIL_APP_PASSWORD>
+DEFAULT_FROM_EMAIL=Alliance Yuwa Club <allianceyuwaclub@gmail.com>
+
+Use a Gmail App Password when required by the account. Never commit
+EMAIL_HOST_PASSWORD or place it in frontend/Vite environment variables.
+When DEBUG=True and no backend is configured, email uses Django's console
+backend so local tests do not send real messages.
 
 5. Python Coding Standards
 

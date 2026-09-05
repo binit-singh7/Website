@@ -251,6 +251,13 @@ SUPABASE_STORAGE_BUCKET
 SUPABASE_S3_ACCESS_KEY_ID
 SUPABASE_S3_SECRET_ACCESS_KEY
 SUPABASE_S3_ENDPOINT_URL
+EMAIL_BACKEND
+EMAIL_HOST
+EMAIL_PORT
+EMAIL_USE_TLS
+EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD
+DEFAULT_FROM_EMAIL
 
 Create a local .env file when required.
 
@@ -263,6 +270,10 @@ environment.
 
 When DEBUG=False, DATABASE_URL, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS,
 CSRF_TRUSTED_ORIGINS, and durable media storage configuration are required.
+
+Production Gmail SMTP uses the environment variables above. Supply
+EMAIL_HOST_PASSWORD through the hosting provider as a Gmail App Password;
+never commit it or expose it to the frontend.
 
 Backend Apps
 

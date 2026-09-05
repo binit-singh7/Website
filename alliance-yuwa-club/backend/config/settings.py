@@ -364,11 +364,13 @@ def get_media_storage_configuration(environment=None):
         environment=environment,
     )
 
-    if not get_boolean_setting("DEBUG", default=True, environment=environment):
-        if not use_supabase_storage:
-            raise ImproperlyConfigured(
-                "USE_SUPABASE_STORAGE must be true when DEBUG=False."
-            )
+    if (
+        not get_boolean_setting("DEBUG", default=True, environment=environment)
+        and not use_supabase_storage
+    ):
+        raise ImproperlyConfigured(
+            "USE_SUPABASE_STORAGE must be true when DEBUG=False."
+        )
 
     if not use_supabase_storage:
         return {
@@ -579,12 +581,34 @@ else:
 # EMAIL
 # =============================================================================
 
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend",
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
+if not EMAIL_BACKEND:
+    EMAIL_BACKEND = (
+        "django.core.mail.backends.smtp.EmailBackend"
+        if not DEBUG
+        else "django.core.mail.backends.console.EmailBackend"
+    )
+
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = get_boolean_setting("EMAIL_USE_TLS", default=True)
+EMAIL_HOST_USER = os.environ.get(
+    "EMAIL_HOST_USER",
+    "allianceyuwaclub@gmail.com",
 )
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+if not DEBUG and EMAIL_BACKEND != "django.core.mail.backends.smtp.EmailBackend":
+    raise ImproperlyConfigured(
+        "Production email must use Django's SMTP email backend."
+    )
+
+if not DEBUG and not EMAIL_HOST_PASSWORD:
+    raise ImproperlyConfigured(
+        "EMAIL_HOST_PASSWORD must be set when DEBUG=False."
+    )
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
-    "webmaster@localhost",
+    "Alliance Yuwa Club <allianceyuwaclub@gmail.com>",
 )

@@ -1,10 +1,18 @@
+import os
 from datetime import date
+from smtplib import SMTPException
+from unittest.mock import patch
 
+from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from rest_framework.test import APITestCase
 
+from config import settings
+
+from .admin import MembershipApplicationAdmin
 from .models import MembershipApplication
 
 
@@ -67,6 +75,30 @@ class MembershipApplicationApiTests(APITestCase):
         self.assertEqual(application.areas_of_interest, "Environment, Social Service")
         self.assertEqual(application.admin_notes, "")
 
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="Alliance Yuwa Club <allianceyuwaclub@gmail.com>",
+    )
+    def test_valid_submission_sends_personalized_confirmation_email(self):
+        response = self.client.post("/api/membership/apply/", self.payload, format="json")
+
+        self.assertEqual(response.status_code, 201)
+        application = MembershipApplication.objects.get()
+        self.assertEqual(application.status, MembershipApplication.STATUS_PENDING)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [application.email])
+        self.assertIn(application.full_name, mail.outbox[0].body)
+        self.assertIn(f"Application Reference: {application.pk}", mail.outbox[0].body)
+        self.assertIn("pending review", mail.outbox[0].body)
+
+    @patch("memberships.emails.send_mail", side_effect=SMTPException("SMTP unavailable"))
+    def test_email_failure_keeps_saved_application_and_success_response(self, send_mail):
+        response = self.client.post("/api/membership/apply/", self.payload, format="json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(MembershipApplication.objects.filter(email=self.payload["email"]).exists())
+        send_mail.assert_called_once()
+
     def test_invalid_submission_returns_field_errors(self):
         response = self.client.post(
             "/api/membership/apply/", self.payload | {"phone": "invalid"}, format="json"
@@ -89,3 +121,120 @@ class MembershipApplicationApiTests(APITestCase):
         self.assertEqual(response.status_code, 429)
         self.assertIn("detail", response.data)
         self.assertEqual(MembershipApplication.objects.count(), 3)
+
+
+class MembershipApplicationAdminTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.reviewer = get_user_model().objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="test-password",
+        )
+        self.application = MembershipApplication.objects.create(
+            full_name="Admin Applicant",
+            date_of_birth=date(2002, 4, 10),
+            phone="9800000000",
+            email="admin-applicant@example.com",
+            address="Biratnagar",
+            ward="10",
+            occupation="Student",
+            education="Bachelor",
+            areas_of_interest="Environment",
+            reason_for_joining="Community service",
+        )
+        self.admin_instance = MembershipApplicationAdmin(
+            MembershipApplication, admin.site
+        )
+        self.request = self.factory.post("/admin/memberships/membershipapplication/")
+        self.request.user = self.reviewer
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="Alliance Yuwa Club <allianceyuwaclub@gmail.com>",
+    )
+    @patch.object(MembershipApplicationAdmin, "message_user")
+    def test_approval_action_updates_metadata_and_sends_email(self, message_user):
+        self.admin_instance.approve_applications(
+            self.request,
+            MembershipApplication.objects.filter(pk=self.application.pk),
+        )
+
+        self.application.refresh_from_db()
+        self.assertEqual(
+            self.application.status, MembershipApplication.STATUS_APPROVED
+        )
+        self.assertEqual(self.application.reviewed_by, self.reviewer)
+        self.assertIsNotNone(self.application.reviewed_at)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.application.full_name, mail.outbox[0].body)
+        self.assertIn("approved", mail.outbox[0].body)
+        message_user.assert_called()
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="Alliance Yuwa Club <allianceyuwaclub@gmail.com>",
+    )
+    @patch.object(MembershipApplicationAdmin, "message_user")
+    def test_rejection_action_updates_status_and_sends_email(self, message_user):
+        self.application.admin_notes = "Internal review note"
+        self.application.save(update_fields=("admin_notes",))
+
+        self.admin_instance.reject_applications(
+            self.request,
+            MembershipApplication.objects.filter(pk=self.application.pk),
+        )
+
+        self.application.refresh_from_db()
+        self.assertEqual(
+            self.application.status, MembershipApplication.STATUS_REJECTED
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.application.full_name, mail.outbox[0].body)
+        self.assertIn("unable to approve", mail.outbox[0].body)
+        self.assertNotIn(self.application.admin_notes, mail.outbox[0].body)
+        message_user.assert_called()
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="Alliance Yuwa Club <allianceyuwaclub@gmail.com>",
+    )
+    @patch.object(MembershipApplicationAdmin, "message_user")
+    def test_repeating_same_admin_action_does_not_resend_email(self, message_user):
+        queryset = MembershipApplication.objects.filter(pk=self.application.pk)
+
+        self.admin_instance.approve_applications(self.request, queryset)
+        self.admin_instance.approve_applications(self.request, queryset)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            MembershipApplication.objects.get(pk=self.application.pk).status,
+            MembershipApplication.STATUS_APPROVED,
+        )
+        message_user.assert_called()
+
+    @patch(
+        "memberships.admin.send_application_approved_email",
+        return_value=False,
+    )
+    @patch.object(MembershipApplicationAdmin, "message_user")
+    def test_review_status_is_kept_when_status_email_fails(
+        self, message_user, send_notification
+    ):
+        self.admin_instance.approve_applications(
+            self.request,
+            MembershipApplication.objects.filter(pk=self.application.pk),
+        )
+
+        self.application.refresh_from_db()
+        self.assertEqual(
+            self.application.status, MembershipApplication.STATUS_APPROVED
+        )
+        send_notification.assert_called_once()
+        message_user.assert_called()
+
+    def test_email_password_is_loaded_from_environment_setting(self):
+        self.assertEqual(
+            settings.EMAIL_HOST_PASSWORD,
+            os.environ.get("EMAIL_HOST_PASSWORD", ""),
+        )

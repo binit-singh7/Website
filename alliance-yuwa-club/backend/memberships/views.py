@@ -3,6 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
+from .emails import send_application_received_email
 from .serializers import MembershipApplicationSerializer
 
 
@@ -15,7 +16,8 @@ class MembershipApplicationCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        application = serializer.save()
+        send_application_received_email(application)
         return Response(
             {"message": "Membership application submitted successfully."},
             status=status.HTTP_201_CREATED,

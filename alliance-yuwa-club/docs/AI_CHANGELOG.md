@@ -2507,3 +2507,78 @@ Related Documentation:
 - ARCHITECTURE.md
 - API.md
 - DEVELOPMENT.md
+
+---
+
+## CHANGE-0025 - Add Membership Email Notifications
+
+Date:
+2026-09-05
+
+Agent:
+GitHub Copilot
+
+Type:
+feature / security
+
+Requirement:
+Membership submissions require applicant confirmation, and authorized staff
+need explicit approval/rejection workflows with status notifications.
+
+Reason:
+The existing membership flow saved applications but did not notify applicants
+or provide explicit, non-duplicating review actions in Django Admin.
+
+Files Changed:
+- backend/config/settings.py
+- backend/memberships/emails.py
+- backend/memberships/views.py
+- backend/memberships/admin.py
+- backend/memberships/tests.py
+- docs/DEVELOPMENT.md
+- README.md
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Added a small plain-text membership email service for receipt, approval, and
+  rejection messages.
+- Sends the receipt after the application is saved, preserving the existing
+  HTTP 201 response if delivery fails; failures are logged without sensitive
+  application data.
+- Added explicit Admin approve/reject actions that set status, review time,
+  reviewer, and send one status email only when the status changes.
+- Configured Gmail SMTP through Django settings and environment variables.
+  DEBUG=True without an explicit backend continues to use the console backend.
+
+Database Changes:
+None. Existing status, reviewed_at, reviewed_by, and primary-key reference
+fields were sufficient. No migration was created.
+
+API Changes:
+None. The membership submission response remains unchanged.
+
+Dependencies Added:
+None.
+
+Tests:
+- Membership submission saves a pending application and sends a personalized
+  receipt through Django's in-memory email backend.
+- SMTP failure preserves the saved application and successful API response.
+- Admin approval and rejection update review metadata and send notifications.
+- Repeating an Admin action does not resend a notification.
+- Admin status changes persist when notification delivery fails.
+- SMTP password setting is read from environment configuration.
+
+Verification:
+- `python manage.py check` passed.
+- `python manage.py test memberships` passed (11 tests).
+- `python manage.py test` passed (53 tests).
+- `python manage.py makemigrations --check` passed.
+- `npm run lint` passed.
+- `npm run build` passed.
+
+Security:
+- No Gmail password or App Password is stored in source, documentation, Git,
+  or frontend files.
+- Approval/rejection emails do not include admin notes or unnecessary personal
+  information.
