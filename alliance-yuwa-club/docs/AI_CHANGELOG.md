@@ -2582,3 +2582,76 @@ Security:
   or frontend files.
 - Approval/rejection emails do not include admin notes or unnecessary personal
   information.
+
+---
+
+## CHANGE-0026 - Migrate Membership Email Delivery to Resend
+
+Date:
+2026-09-05
+
+Agent:
+GitHub Copilot
+
+Type:
+security / deployment / feature maintenance
+
+Requirement:
+Production membership notifications must work on Render Free, where outbound
+SMTP ports are blocked. The existing membership workflow and API contract must
+remain unchanged.
+
+Reason:
+The previous Gmail SMTP configuration correctly reached `smtp.gmail.com:587`
+but failed at network connection time on Render. Resend provides an HTTPS API
+transport that is compatible with the deployed environment.
+
+Files Changed:
+- backend/config/settings.py
+- backend/memberships/emails.py
+- backend/memberships/tests.py
+- README.md
+- docs/DEVELOPMENT.md
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Replaced production SMTP selection with the Resend HTTPS API.
+- Kept the public notification functions and Admin/API call sites unchanged.
+- Added one provider boundary with an explicit configurable timeout.
+- Preserved the local console email backend when DEBUG=True and Resend is not
+  configured.
+- Configured the verified sender as `no-reply@allianceyuwaclub.org.np` with
+  `Alliance Yuwa Club` as the sender name and the Gmail account as Reply-To.
+- Resend failures return safely without changing saved application/status data.
+
+Environment Variables:
+- EMAIL_PROVIDER
+- RESEND_API_KEY
+- EMAIL_FROM_EMAIL
+- EMAIL_FROM_NAME
+- EMAIL_REPLY_TO
+
+No API key or other credential is stored in source, documentation, Git, or
+frontend files.
+
+Database Changes:
+None. No migrations were created.
+
+API Changes:
+None. Membership request and response contracts are unchanged.
+
+Dependencies Added:
+None. The adapter uses Python's standard HTTPS library.
+
+Tests:
+- Resend payload, sender, Reply-To, and timeout are tested with mocked HTTPS.
+- Provider timeout and delivery failure are handled without data loss.
+- Existing receipt, approval, rejection, duplicate-prevention, and API tests
+  remain covered.
+
+Verification:
+- `python manage.py check`
+- `python manage.py test`
+- `python manage.py makemigrations --check`
+- `npm run lint`
+- `npm run build`

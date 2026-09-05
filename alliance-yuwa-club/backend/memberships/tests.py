@@ -1,7 +1,9 @@
+import json
 import os
 from datetime import date
-from smtplib import SMTPException
+from typing import ClassVar
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -13,6 +15,7 @@ from rest_framework.test import APITestCase
 from config import settings
 
 from .admin import MembershipApplicationAdmin
+from .emails import send_membership_email
 from .models import MembershipApplication
 
 
@@ -43,7 +46,7 @@ class MembershipApplicationModelTests(TestCase):
 
 
 class MembershipApplicationApiTests(APITestCase):
-    payload = {
+    payload: ClassVar[dict] = {
         "full_name": "Example Applicant",
         "date_of_birth": "2002-04-10",
         "phone": "9800000000",
@@ -91,13 +94,18 @@ class MembershipApplicationApiTests(APITestCase):
         self.assertIn(f"Application Reference: {application.pk}", mail.outbox[0].body)
         self.assertIn("pending review", mail.outbox[0].body)
 
-    @patch("memberships.emails.send_mail", side_effect=SMTPException("SMTP unavailable"))
-    def test_email_failure_keeps_saved_application_and_success_response(self, send_mail):
+    @patch(
+        "memberships.emails.send_membership_email",
+        side_effect=OSError("provider unavailable"),
+    )
+    def test_email_failure_keeps_saved_application_and_success_response(
+        self, send_email
+    ):
         response = self.client.post("/api/membership/apply/", self.payload, format="json")
 
         self.assertEqual(response.status_code, 201)
         self.assertTrue(MembershipApplication.objects.filter(email=self.payload["email"]).exists())
-        send_mail.assert_called_once()
+        send_email.assert_called_once()
 
     def test_invalid_submission_returns_field_errors(self):
         response = self.client.post(
@@ -235,6 +243,87 @@ class MembershipApplicationAdminTests(TestCase):
 
     def test_email_password_is_loaded_from_environment_setting(self):
         self.assertEqual(
-            settings.EMAIL_HOST_PASSWORD,
-            os.environ.get("EMAIL_HOST_PASSWORD", ""),
+            settings.RESEND_API_KEY,
+            os.environ.get("RESEND_API_KEY", ""),
         )
+
+
+class MembershipEmailProviderTests(TestCase):
+    @override_settings(
+        EMAIL_PROVIDER="resend",
+        RESEND_API_URL="https://api.resend.com/emails",
+        RESEND_API_KEY="test-resend-key",
+        EMAIL_FROM_EMAIL="no-reply@allianceyuwaclub.org.np",
+        EMAIL_FROM_NAME="Alliance Yuwa Club",
+        EMAIL_REPLY_TO="allianceyuwaclub@gmail.com",
+        DEFAULT_FROM_EMAIL="Alliance Yuwa Club <no-reply@allianceyuwaclub.org.np>",
+        EMAIL_API_TIMEOUT=7,
+    )
+    @patch("memberships.emails.urlopen")
+    def test_resend_provider_sends_expected_https_payload(self, urlopen):
+        response = urlopen.return_value.__enter__.return_value
+        response.status = 200
+
+        sent = send_membership_email(
+            to_email="applicant@example.com",
+            subject="Subject",
+            body="Body",
+            notification_type="application_received",
+        )
+
+        self.assertTrue(sent)
+        request = urlopen.call_args.args[0]
+        payload = json.loads(request.data.decode("utf-8"))
+        self.assertEqual(payload["from"], "Alliance Yuwa Club <no-reply@allianceyuwaclub.org.np>")
+        self.assertEqual(payload["to"], ["applicant@example.com"])
+        self.assertEqual(payload["reply_to"], ["allianceyuwaclub@gmail.com"])
+        self.assertEqual(payload["text"], "Body")
+        self.assertEqual(request.get_header("Authorization"), "Bearer test-resend-key")
+        self.assertEqual(urlopen.call_args.kwargs["timeout"], 7)
+
+    @override_settings(
+        EMAIL_PROVIDER="resend",
+        RESEND_API_KEY="test-resend-key",
+        EMAIL_FROM_EMAIL="no-reply@allianceyuwaclub.org.np",
+        EMAIL_FROM_NAME="Alliance Yuwa Club",
+        EMAIL_REPLY_TO="allianceyuwaclub@gmail.com",
+        DEFAULT_FROM_EMAIL="Alliance Yuwa Club <no-reply@allianceyuwaclub.org.np>",
+    )
+    @patch("memberships.emails.urlopen", side_effect=TimeoutError("timed out"))
+    def test_resend_timeout_returns_failure_without_network_retry(self, urlopen):
+        self.assertFalse(
+            send_membership_email(
+                to_email="applicant@example.com",
+                subject="Subject",
+                body="Body",
+                notification_type="application_received",
+            )
+        )
+        urlopen.assert_called_once()
+
+    @override_settings(
+        EMAIL_PROVIDER="resend",
+        RESEND_API_KEY="test-resend-key",
+        EMAIL_FROM_EMAIL="no-reply@allianceyuwaclub.org.np",
+        EMAIL_FROM_NAME="Alliance Yuwa Club",
+        EMAIL_REPLY_TO="allianceyuwaclub@gmail.com",
+        DEFAULT_FROM_EMAIL="Alliance Yuwa Club <no-reply@allianceyuwaclub.org.np>",
+    )
+    @patch(
+        "memberships.emails.urlopen",
+        side_effect=HTTPError(
+            "https://api.resend.com/emails", 422, "invalid sender", {}, None
+        ),
+    )
+    def test_resend_http_failure_returns_failure_without_exposing_error(
+        self, urlopen
+    ):
+        self.assertFalse(
+            send_membership_email(
+                to_email="applicant@example.com",
+                subject="Subject",
+                body="Body",
+                notification_type="application_received",
+            )
+        )
+        urlopen.assert_called_once()

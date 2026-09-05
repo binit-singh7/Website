@@ -581,34 +581,41 @@ else:
 # EMAIL
 # =============================================================================
 
-EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
-if not EMAIL_BACKEND:
-    EMAIL_BACKEND = (
-        "django.core.mail.backends.smtp.EmailBackend"
-        if not DEBUG
-        else "django.core.mail.backends.console.EmailBackend"
-    )
-
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = get_boolean_setting("EMAIL_USE_TLS", default=True)
-EMAIL_HOST_USER = os.environ.get(
-    "EMAIL_HOST_USER",
-    "allianceyuwaclub@gmail.com",
+EMAIL_PROVIDER = os.environ.get(
+    "EMAIL_PROVIDER",
+    "console" if DEBUG else "resend",
+).strip().lower()
+RESEND_API_URL = os.environ.get(
+    "RESEND_API_URL",
+    "https://api.resend.com/emails",
 )
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+EMAIL_FROM_EMAIL = os.environ.get("EMAIL_FROM_EMAIL", "")
+EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME", "")
+EMAIL_REPLY_TO = os.environ.get("EMAIL_REPLY_TO", "")
+EMAIL_API_TIMEOUT = float(os.environ.get("EMAIL_API_TIMEOUT", "10"))
 
-if not DEBUG and EMAIL_BACKEND != "django.core.mail.backends.smtp.EmailBackend":
-    raise ImproperlyConfigured(
-        "Production email must use Django's SMTP email backend."
-    )
+if not DEBUG:
+    required_email_settings = {
+        "EMAIL_PROVIDER": EMAIL_PROVIDER,
+        "RESEND_API_KEY": RESEND_API_KEY,
+        "EMAIL_FROM_EMAIL": EMAIL_FROM_EMAIL,
+        "EMAIL_FROM_NAME": EMAIL_FROM_NAME,
+        "EMAIL_REPLY_TO": EMAIL_REPLY_TO,
+    }
+    missing_email_settings = [
+        name for name, value in required_email_settings.items() if not value
+    ]
+    if EMAIL_PROVIDER != "resend":
+        missing_email_settings.append("EMAIL_PROVIDER=resend")
+    if missing_email_settings:
+        raise ImproperlyConfigured(
+            "Missing production email configuration: "
+            + ", ".join(missing_email_settings)
+        )
 
-if not DEBUG and not EMAIL_HOST_PASSWORD:
-    raise ImproperlyConfigured(
-        "EMAIL_HOST_PASSWORD must be set when DEBUG=False."
-    )
-
-DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL",
-    "Alliance Yuwa Club <allianceyuwaclub@gmail.com>",
+DEFAULT_FROM_EMAIL = (
+    f"{EMAIL_FROM_NAME} <{EMAIL_FROM_EMAIL}>"
+    if EMAIL_FROM_NAME and EMAIL_FROM_EMAIL
+    else EMAIL_FROM_EMAIL
 )
