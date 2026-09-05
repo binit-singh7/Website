@@ -1,49 +1,13 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
-import borderCleanliness from '../assets/images/border-cleanliness.jpg'
-import generalConvention from '../assets/images/general-convention.jpg'
 import heroCommunity from '../assets/images/hero-community.jpg'
-import womensSports from '../assets/images/womens-sports-festival.jpg'
 import Button from '../components/Button'
 import Seo from '../components/Seo'
+import { fetchActivities, mediaUrl } from '../services/api'
+import { excerpt, formatDate } from './contentUtils'
 import './Home.css'
-
-const featuredActivities = [
-  {
-    category: 'Environment',
-    date: '12 August 2026',
-    location: 'Biratnagar–Jogbani (Rani) border area',
-    title: 'International Youth Day Border Cleanliness Drive',
-    summary: 'A community cleanup and plastics collection drive coordinated with local volunteers, Nepal Police, and metropolitan waste management.',
-    to: '/activities/international-youth-day-border-cleanliness-awareness-drive',
-    tone: 'green',
-    image: borderCleanliness,
-    imageAlt: 'Volunteers during the International Youth Day border cleanliness drive',
-  },
-  {
-    category: 'Youth & Leadership',
-    date: '15 August 2026',
-    location: 'Biratnagar',
-    title: 'First General Convention / Adhibheshana',
-    summary: 'The club’s first general convention formalized leadership roles and the executive committee through an internal election.',
-    to: '/events/first-general-convention-adhibheshana',
-    tone: 'blue',
-    image: generalConvention,
-    imageAlt: 'Participants at the Alliance Yuwa Club general convention',
-  },
-  {
-    category: 'Sports & Culture',
-    date: 'June 2026',
-    location: 'Biratnagar',
-    title: "Women’s Sports and Cultural Festival 2083",
-    summary: 'A community program bringing youth together through sports, participation, and cultural preservation.',
-    to: '/activities/womens-sports-cultural-festival-2083',
-    tone: 'orange',
-    image: womensSports,
-    imageAlt: 'Participants at the Women’s Sports and Cultural Festival 2083',
-  },
-]
 
 const impactMetrics = [
   ['6+', 'Years of Leadership'],
@@ -53,12 +17,32 @@ const impactMetrics = [
 
 function Home() {
   const shouldReduceMotion = useReducedMotion()
+  const [featuredActivities, setFeaturedActivities] = useState(null)
+  const [featuredActivitiesError, setFeaturedActivitiesError] = useState(false)
   const reveal = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 24 },
     visible: { opacity: 1, y: 0 },
   }
   const transition = { duration: shouldReduceMotion ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }
   const hover = shouldReduceMotion ? {} : { y: -5 }
+
+  useEffect(() => {
+    let isCurrent = true
+
+    fetchActivities({ featured: true, pageSize: 3 })
+      .then((response) => {
+        if (!isCurrent) return
+        setFeaturedActivities(Array.isArray(response) ? response : response.results || [])
+        setFeaturedActivitiesError(false)
+      })
+      .catch(() => {
+        if (!isCurrent) return
+        setFeaturedActivities([])
+        setFeaturedActivitiesError(true)
+      })
+
+    return () => { isCurrent = false }
+  }, [])
 
   return (
     <div className="home-page">
@@ -128,33 +112,51 @@ function Home() {
           <h2 id="featured-title">The work leaves a record.</h2>
           <p>From public service to leadership and culture, each program is a step taken together.</p>
         </motion.header>
-        <div className="home-featured__grid">
-          {featuredActivities.map((activity, index) => (
-            <motion.article
-              key={activity.title}
-              className={`activity-feature activity-feature--${activity.tone}`}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.22 }}
-              variants={reveal}
-              transition={{ ...transition, delay: shouldReduceMotion ? 0 : index * 0.08 }}
-              whileHover={hover}
-            >
-              <Link className="activity-feature__link" to={activity.to}>
-                <div className="activity-feature__image">
-                  <img src={activity.image} alt={activity.imageAlt} loading="lazy" />
-                </div>
-                <div className="activity-feature__body">
-                  <p className="activity-feature__category">{activity.category}</p>
-                  <p className="activity-feature__meta">{activity.date} <span aria-hidden="true">·</span> {activity.location}</p>
-                  <h3>{activity.title}</h3>
-                  <p>{activity.summary}</p>
-                  <span className="activity-feature__cta">View activity <span aria-hidden="true">→</span></span>
-                </div>
-              </Link>
-            </motion.article>
-          ))}
-        </div>
+        {featuredActivities === null ? (
+          <p className="home-featured__message" role="status" aria-live="polite">Loading featured activities…</p>
+        ) : featuredActivitiesError ? (
+          <p className="home-featured__message" role="alert">Featured activities are unavailable right now.</p>
+        ) : featuredActivities.length === 0 ? (
+          <p className="home-featured__message">No featured activities are available yet.</p>
+        ) : (
+          <div className="home-featured__grid">
+            {featuredActivities.map((activity, index) => (
+              <motion.article
+                key={activity.id || activity.slug}
+                className={`activity-feature activity-feature--${['green', 'blue', 'orange'][index % 3]}`}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.22 }}
+                variants={reveal}
+                transition={{ ...transition, delay: shouldReduceMotion ? 0 : index * 0.08 }}
+                whileHover={hover}
+              >
+                <Link className="activity-feature__link" to={`/activities/${activity.slug}`}>
+                  <div className="activity-feature__image">
+                    {activity.cover_image ? (
+                      <img
+                        src={mediaUrl(activity.cover_image)}
+                        alt={`${activity.title} cover image`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="activity-feature__image--empty" role="img" aria-label={`${activity.title} photograph unavailable`}>
+                        <span>Activity photograph</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="activity-feature__body">
+                    <p className="activity-feature__category">{activity.category?.name || 'Activity'}</p>
+                    <p className="activity-feature__meta">{formatDate(activity.date)}{activity.location && <> <span aria-hidden="true">·</span> {activity.location}</>}</p>
+                    <h3>{activity.title}</h3>
+                    <p>{excerpt(activity.description)}</p>
+                    <span className="activity-feature__cta">View activity <span aria-hidden="true">→</span></span>
+                  </div>
+                </Link>
+              </motion.article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="home-journey" aria-labelledby="journey-title">

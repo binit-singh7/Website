@@ -1174,6 +1174,7 @@ paths.
 
 Files Changed:
 - frontend/src/pages/Home.jsx
+- frontend/src/services/api.js
 - frontend/src/pages/Home.css
 - frontend/src/routes/AppRoutes.jsx
 - frontend/src/components/components.css
@@ -2653,5 +2654,54 @@ Verification:
 - `python manage.py check`
 - `python manage.py test`
 - `python manage.py makemigrations --check`
+- `npm run lint`
+- `npm run build`
+
+---
+
+## CHANGE-0027 - Load Homepage Featured Activities from API
+
+Date:
+2026-09-05
+
+Agent:
+GitHub Copilot
+
+Type:
+feature maintenance
+
+Requirement:
+The homepage featured activity cards must be database/API-driven while
+preserving the existing visual design and activity detail routes.
+
+Reason:
+The homepage used a hardcoded activity dataset and hardcoded slugs, so Admin
+content changes were not reflected on the public homepage.
+
+Files Changed:
+- frontend/src/pages/Home.jsx
+- frontend/src/pages/Home.css
+- docs/AI_CHANGELOG.md
+
+Implementation:
+- Added one request through the existing `fetchActivities` service using
+  `featured=true` and `page_size=3`.
+- Mapped API title, slug, description, category, date, location, and cover
+  image fields into the existing card layout.
+- Reused `mediaUrl` for backend-managed media and linked cards with real
+  activity slugs.
+- Added lightweight loading, error, empty, and missing-cover handling.
+
+Database Changes:
+None.
+
+API Changes:
+None. The existing activities endpoint and response contract were reused.
+
+Tests:
+- Existing frontend lint and build checks were used because no frontend test
+  framework is configured.
+
+Verification:
 - `npm run lint`
 - `npm run build`

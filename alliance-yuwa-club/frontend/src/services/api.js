@@ -13,10 +13,11 @@ export function fetchActivityCategories() {
   return requestCollection('/activity-categories/')
 }
 
-export function fetchActivities({ category, year, page, pageSize } = {}) {
+export function fetchActivities({ category, year, featured, page, pageSize } = {}) {
   return requestCollection('/activities/', {
     category: category || undefined,
     year: year || undefined,
+    featured: featured === undefined ? undefined : featured,
     page: page || undefined,
     page_size: pageSize || undefined,
   })
