@@ -33,9 +33,10 @@ def _send_resend_email(to_email, subject, body, notification_type):
         headers={
             "Authorization": f"Bearer {settings.RESEND_API_KEY}",
             "Content-Type": "application/json",
+            "User-Agent": "AllianceYuwaApp/1.0", # Bypasses Cloudflare block
         },
         method="POST",
-    )
+    )   
 
     try:
         with urlopen(request, timeout=settings.EMAIL_API_TIMEOUT) as response:
