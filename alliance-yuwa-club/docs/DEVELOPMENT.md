@@ -95,6 +95,12 @@ DATABASE_URL
 ALLOWED_HOSTS
 CORS_ALLOWED_ORIGINS
 CSRF_TRUSTED_ORIGINS
+FRONTEND_BASE_URL
+USE_SUPABASE_STORAGE
+SUPABASE_STORAGE_BUCKET
+SUPABASE_S3_ACCESS_KEY_ID
+SUPABASE_S3_SECRET_ACCESS_KEY
+SUPABASE_S3_ENDPOINT_URL
 
 A local .env file may be used during development.
 
@@ -111,6 +117,9 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 
 Production values must be stored in the hosting provider's environment
 configuration.
+
+When DEBUG=False, DATABASE_URL, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS,
+CSRF_TRUSTED_ORIGINS, and durable media storage configuration are required.
 
 5. Python Coding Standards
 
@@ -624,7 +633,7 @@ Public launch.
 The project is ready for launch when:
 
 [ ] Public website is accessible.
-[ ] allianceyuwaclub.com.np works.
+[ ] allianceyuwaclub.org.np works.
 [ ] HTTPS is enabled.
 [ ] Home page works.
 [ ] About page works.

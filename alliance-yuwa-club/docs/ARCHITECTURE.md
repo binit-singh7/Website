@@ -11,7 +11,7 @@ Alliance Yuwa Club V1 will use a decoupled frontend/backend architecture.
                     Internet
                        |
                        v
-              allianceyuwaclub.com.np
+              allianceyuwaclub.org.np
                        |
                        v
                 React Frontend
@@ -293,8 +293,17 @@ DATABASE_URL
 ALLOWED_HOSTS
 CORS_ALLOWED_ORIGINS
 CSRF_TRUSTED_ORIGINS
+FRONTEND_BASE_URL
+USE_SUPABASE_STORAGE
+SUPABASE_STORAGE_BUCKET
+SUPABASE_S3_ACCESS_KEY_ID
+SUPABASE_S3_SECRET_ACCESS_KEY
+SUPABASE_S3_ENDPOINT_URL
 
 Production secrets must never be stored in Git.
+
+When DEBUG=False, DATABASE_URL, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS,
+CSRF_TRUSTED_ORIGINS, and durable media storage configuration are required.
 
 13. Development Environments
 Local
@@ -309,7 +318,7 @@ The frontend and backend may be deployed independently.
 
 The custom domain:
 
-https://allianceyuwaclub.com.np
+https://allianceyuwaclub.org.np
 
 will serve the public website.
 

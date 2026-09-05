@@ -2437,3 +2437,73 @@ Scope Control:
   task.
 
 ---
+
+## CHANGE-0003 - Normalize Production Domain and Configuration
+
+Date:
+2026-09-05
+
+Agent:
+GitHub Copilot
+
+Type:
+security / deployment / documentation
+
+Requirement:
+The official production website is `https://allianceyuwaclub.org.np` and the
+API is `https://api.allianceyuwaclub.org.np`. Production configuration must not
+silently fall back to development database, origin, or media settings.
+
+Reason:
+Production references were inconsistent across documentation, frontend build
+defaults, Docker configuration, SEO, and deployment routing. DEBUG=False also
+allowed database and media fallbacks that were inappropriate for production.
+
+Files Changed:
+- backend/config/settings.py
+- backend/core/tests.py
+- docker-compose.yml
+- frontend/Dockerfile
+- frontend/.env.production.example
+- README.md
+- docs/REQUIREMENTS.md
+- docs/ARCHITECTURE.md
+- docs/API.md
+- docs/DEVELOPMENT.md
+
+Implementation:
+- Normalized active production references to the official `.org.np` website and
+  API hosts.
+- Required `DATABASE_URL`, non-empty `ALLOWED_HOSTS`,
+  `CORS_ALLOWED_ORIGINS`, and `CSRF_TRUSTED_ORIGINS` when `DEBUG=False`.
+- Required Supabase-compatible durable media storage when `DEBUG=False`.
+- Updated Docker Compose production defaults and required media variables.
+- Preserved local DEBUG=True fallbacks and existing Render/Vercel routing.
+
+Database Changes:
+None. No migrations were created.
+
+API Changes:
+None. API routes and response contracts were not changed.
+
+Tests:
+- Added a regression test for the production durable-media requirement.
+
+Verification:
+- `python manage.py check` passed.
+- `python manage.py test` passed.
+- `python manage.py makemigrations --check` passed.
+- `npm run lint` passed.
+- `npm run build` passed.
+- Repository-wide search confirmed no active superseded-domain or placeholder
+  production references remain.
+
+Unnecessary Alternatives Considered:
+No dependencies, frontend redesign, API changes, migrations, or unrelated
+refactors were introduced.
+
+Related Documentation:
+- REQUIREMENTS.md
+- ARCHITECTURE.md
+- API.md
+- DEVELOPMENT.md

@@ -4,7 +4,7 @@
 **Organization:** Alliance Yuwa Club  
 **Former/previous identity:** Shanti Yuwa Club  
 **Location:** Biratnagar, Nepal  
-**Website:** https://allianceyuwaclub.com.np
+**Website:** https://allianceyuwaclub.org.np
 
 ---
 
@@ -42,7 +42,7 @@ The V1 website must:
 9. Allow authorized staff to manage website content.
 10. Be responsive on mobile, tablet, and desktop devices.
 11. Be suitable for production deployment on
-    allianceyuwaclub.com.np.
+    allianceyuwaclub.org.np.
 12. Provide a foundation for future member-management features.
 
 ---

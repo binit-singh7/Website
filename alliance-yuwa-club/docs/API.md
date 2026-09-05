@@ -26,7 +26,7 @@ http://127.0.0.1:8000/api/
 
 Production:
 
-https://allianceyuwaclub.com.np/api/
+https://api.allianceyuwaclub.org.np/api/
 
 The production API domain may be separated from the public frontend
 domain depending on deployment configuration.

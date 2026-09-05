@@ -2,7 +2,7 @@ from datetime import date, datetime
 from urllib.parse import urlparse
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
@@ -28,6 +28,15 @@ from .validators import (
 
 
 class MediaStorageConfigurationTests(SimpleTestCase):
+    def test_production_requires_durable_media_storage(self):
+        with self.assertRaisesMessage(
+            ImproperlyConfigured,
+            "USE_SUPABASE_STORAGE must be true when DEBUG=False.",
+        ):
+            get_media_storage_configuration(
+                {"DEBUG": "False", "USE_SUPABASE_STORAGE": "False"}
+            )
+
     def test_local_storage_is_used_when_supabase_storage_is_disabled(self):
         configuration = get_media_storage_configuration(
             {"USE_SUPABASE_STORAGE": "False"}

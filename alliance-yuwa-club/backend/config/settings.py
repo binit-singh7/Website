@@ -102,15 +102,22 @@ if not SECRET_KEY:
         )
 
 
-ALLOWED_HOSTS = get_list_setting(
-    "ALLOWED_HOSTS",
-    default=(
-        "localhost,127.0.0.1,"
-        "allianceyuwaclub.org.np,"
-        "api.allianceyuwaclub.org.np,"
-        "www.allianceyuwaclub.org.np"
-    ),
-)
+if DEBUG:
+    ALLOWED_HOSTS = get_list_setting(
+        "ALLOWED_HOSTS",
+        default=(
+            "localhost,127.0.0.1,"
+            "allianceyuwaclub.org.np,"
+            "api.allianceyuwaclub.org.np,"
+            "www.allianceyuwaclub.org.np"
+        ),
+    )
+else:
+    ALLOWED_HOSTS = get_list_setting("ALLOWED_HOSTS")
+    if not ALLOWED_HOSTS:
+        raise ImproperlyConfigured(
+            "ALLOWED_HOSTS must be set when DEBUG=False."
+        )
 
 
 # =============================================================================
@@ -205,6 +212,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+if not DEBUG and not DATABASE_URL:
+    raise ImproperlyConfigured(
+        "DATABASE_URL must be set when DEBUG=False."
+    )
+
 if DATABASE_URL:
     # Preferred production configuration.
     DATABASES = {
@@ -274,17 +286,28 @@ REST_FRAMEWORK = {
 # CORS / CSRF
 # =============================================================================
 
-CORS_ALLOWED_ORIGINS = get_list_setting(
-    "CORS_ALLOWED_ORIGINS",
-    default=(
-        "http://localhost:5173,"
-        "http://127.0.0.1:5173"
-    ),
-)
-
-CSRF_TRUSTED_ORIGINS = get_list_setting(
-    "CSRF_TRUSTED_ORIGINS",
-)
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = get_list_setting(
+        "CORS_ALLOWED_ORIGINS",
+        default=(
+            "http://localhost:5173,"
+            "http://127.0.0.1:5173"
+        ),
+    )
+    CSRF_TRUSTED_ORIGINS = get_list_setting(
+        "CSRF_TRUSTED_ORIGINS",
+    )
+else:
+    CORS_ALLOWED_ORIGINS = get_list_setting("CORS_ALLOWED_ORIGINS")
+    CSRF_TRUSTED_ORIGINS = get_list_setting("CSRF_TRUSTED_ORIGINS")
+    if not CORS_ALLOWED_ORIGINS:
+        raise ImproperlyConfigured(
+            "CORS_ALLOWED_ORIGINS must be set when DEBUG=False."
+        )
+    if not CSRF_TRUSTED_ORIGINS:
+        raise ImproperlyConfigured(
+            "CSRF_TRUSTED_ORIGINS must be set when DEBUG=False."
+        )
 
 
 # =============================================================================
@@ -340,6 +363,12 @@ def get_media_storage_configuration(environment=None):
         default=False,
         environment=environment,
     )
+
+    if not get_boolean_setting("DEBUG", default=True, environment=environment):
+        if not use_supabase_storage:
+            raise ImproperlyConfigured(
+                "USE_SUPABASE_STORAGE must be true when DEBUG=False."
+            )
 
     if not use_supabase_storage:
         return {

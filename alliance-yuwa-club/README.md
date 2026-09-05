@@ -6,7 +6,7 @@ and social welfare organization based in Biratnagar, Nepal.
 > **Unity. Leadership. Service.**
 
 Website:
-https://allianceyuwaclub.com.np
+https://allianceyuwaclub.org.np
 
 ---
 
@@ -245,6 +245,12 @@ DATABASE_URL
 ALLOWED_HOSTS
 CORS_ALLOWED_ORIGINS
 CSRF_TRUSTED_ORIGINS
+FRONTEND_BASE_URL
+USE_SUPABASE_STORAGE
+SUPABASE_STORAGE_BUCKET
+SUPABASE_S3_ACCESS_KEY_ID
+SUPABASE_S3_SECRET_ACCESS_KEY
+SUPABASE_S3_ENDPOINT_URL
 
 Create a local .env file when required.
 
@@ -254,6 +260,9 @@ Never commit:
 
 Production secrets must be configured through the production hosting
 environment.
+
+When DEBUG=False, DATABASE_URL, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS,
+CSRF_TRUSTED_ORIGINS, and durable media storage configuration are required.
 
 Backend Apps
 
@@ -373,7 +382,7 @@ Production deployment will use:
 Frontend → React
 Backend  → Django
 Database → PostgreSQL
-Domain   → allianceyuwaclub.com.np
+Domain   → allianceyuwaclub.org.np
 
 The final hosting providers and deployment configuration will be
 documented when production deployment begins.
