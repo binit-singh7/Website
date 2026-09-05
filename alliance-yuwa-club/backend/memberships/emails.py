@@ -49,8 +49,9 @@ def _send_resend_email(to_email, subject, body, notification_type):
                 )
                 return False
     except HTTPError as error:
+        error_body = error.read().decode('utf-8')  # Read the hidden Resend error message
         logger.error(
-            "Membership email provider rejected the request",
+            f"Membership email provider rejected the request. Details: {error_body}",
             extra={
                 "notification_type": notification_type,
                 "provider_status": error.code,
