@@ -57,7 +57,7 @@ function Team() {
                   <p>{member.position}</p>
                   <h3>{member.name}</h3>
                   {member.bio && <p className="team-member__bio">{member.bio}</p>}
-\                </div>
+                </div>
               </motion.article>
             ))}
           </div>}
