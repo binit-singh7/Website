@@ -11,8 +11,8 @@ import './Home.css'
 
 const impactMetrics = [
   ['6+', 'Years of Leadership'],
-  ['100+', 'Community Activities'],
-  ['Biratnagar', '& Beyond'],
+  ['1000+', 'Community Activities'],
+  ['Biratnagar', 'Sunsari Saptari & Beyond'],
 ]
 
 function Home() {
@@ -177,7 +177,7 @@ function Home() {
           <ol className="home-timeline">
             <li><span>2020</span><p>Alliance Yuwa Club began its youth-led journey in Biratnagar.</p></li>
             <li><span>2020–2025</span><p>Community service, awareness, sports, culture, and leadership activities built a record of action.</p></li>
-            <li><span>Today</span><p>More than six years and 100+ activities continue to shape the club’s work and reach.</p></li>
+            <li><span>Today</span><p>More than six years and 1000+ activities continue to shape the club’s work and reach.</p></li>
           </ol>
         </div>
       </section>

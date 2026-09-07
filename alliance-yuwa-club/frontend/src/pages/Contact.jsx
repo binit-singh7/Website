@@ -78,6 +78,8 @@ function Contact() {
     ['Facebook', organization?.facebook_url],
     ['Instagram', organization?.instagram_url],
     ['YouTube', organization?.youtube_url],
+    ['TikTok', organization?.tiktok_url],
+    ['Whatsapp', organization?.whatsapp_url],
   ].filter(([, url]) => url)
 
   return (

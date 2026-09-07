@@ -22,6 +22,8 @@ function About() {
           <p className="content-eyebrow">About Alliance Yuwa Club</p>
           <h1 id="about-title">A youth-led record of service in Biratnagar.</h1>
           <p>Alliance Yuwa Club brings young people together around community action, leadership, civic awareness, culture, sport, and service.</p>
+          <p><strong>Regd No. 5030 PAN: 624068169</strong></p>
+          <p>Head Office: <b>Biratnagar-11</b></p>
         </motion.div>
         <img
           className="about-hero__media"
