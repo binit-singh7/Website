@@ -57,8 +57,7 @@ function Team() {
                   <p>{member.position}</p>
                   <h3>{member.name}</h3>
                   {member.bio && <p className="team-member__bio">{member.bio}</p>}
-                  <span className="team-member__social">Verified social links will be added when published.</span>
-                </div>
+\                </div>
               </motion.article>
             ))}
           </div>}
