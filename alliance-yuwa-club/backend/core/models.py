@@ -16,6 +16,7 @@ class Organization(models.Model):
     facebook_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     youtube_url = models.URLField(blank=True)
+    tiktok_url = models.URLField(blank=True)
     logo = models.ImageField(
         upload_to="organization/", blank=True, validators=image_upload_validators
     )

@@ -19,6 +19,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "facebook_url",
             "instagram_url",
             "youtube_url",
+            "tiktok_url",
             "logo",
         )
 
