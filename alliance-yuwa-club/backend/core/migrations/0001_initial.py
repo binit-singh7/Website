@@ -44,7 +44,6 @@ class Migration(migrations.Migration):
                 ('facebook_url', models.URLField(blank=True)),
                 ('instagram_url', models.URLField(blank=True)),
                 ('youtube_url', models.URLField(blank=True)),
-                ('tiktok_url', models.URLField(blank=True)),
                 ('logo', models.ImageField(blank=True, upload_to='organization/')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
