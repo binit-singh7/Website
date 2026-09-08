@@ -35,7 +35,7 @@ function Team() {
       />
       <header className="page-container editorial-intro">
         <p className="content-eyebrow">Executive committee</p>
-        <h1>People behind the work.</h1>
+        <h1>Meet Our Team.</h1>
         <p>Meet the public-facing executive committee formed through the First General Convention / Adhibheshana.</p>
       </header>
       <section className="page-container team-section" aria-labelledby="team-title">
