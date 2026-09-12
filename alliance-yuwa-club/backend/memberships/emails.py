@@ -144,9 +144,14 @@ def send_application_approved_email(application):
 
 We are pleased to inform you that your membership application to Alliance Yuwa Club has been approved.
 
-Welcome to Alliance Yuwa Club.
+Welcome to Alliance Yuwa Club!
 
-Our team will provide you with the next membership steps where applicable.
+To complete your onboarding and join our official member communications group, please reach out to us on WhatsApp:
+
+• WhatsApp Contact: +977 9852658111 / +977 971-2053353 / +977 9816751342 
+• Message Details: Please reply with your full name ({application.full_name}) and mention that your application has been approved.
+
+Our team will guide you through the next membership steps upon receiving your message.
 
 Regards,
 Alliance Yuwa Club
@@ -158,7 +163,6 @@ Unity, Leadership, and Service
         body,
         "application_approved",
     )
-
 
 def send_application_rejected_email(application):
     body = f"""Dear {application.full_name},
