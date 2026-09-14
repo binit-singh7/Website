@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 from django.utils.module_loading import import_string
 from rest_framework.test import APITestCase
@@ -449,3 +449,146 @@ class SitemapTests(TestCase):
         ):
             with self.subTest(url=url):
                 self.assertNotIn(url, content)
+
+
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+class DjangoAdminModernizationTests(TestCase):
+    """Verify that all modernized Django Admin views, changelists, forms, and actions
+
+    render with HTTP 200 and uphold AYC branding and operational integrity.
+    """
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.admin_user = User.objects.create_superuser(
+            username="testadmin",
+            email="admin@allianceyuwaclub.org.np",
+            password="adminpassword123",
+        )
+        self.client.force_login(self.admin_user)
+
+        self.org = Organization.objects.create(
+            name="Alliance Yuwa Club",
+            short_name="AYC",
+            motto="Unity, Leadership, and Service",
+        )
+        self.category = ActivityCategory.objects.create(
+            name="Community Service", slug="community-service"
+        )
+        self.activity = Activity.objects.create(
+            title="Cleanliness Drive",
+            slug="cleanliness-drive",
+            description="Border cleanup program.",
+            date=date(2026, 8, 12),
+            category=self.category,
+            status=Activity.STATUS_PUBLISHED,
+        )
+        self.event = Event.objects.create(
+            title="Youth Leadership Meet",
+            slug="youth-leadership-meet",
+            description="Leadership seminar.",
+            start_datetime=timezone.now(),
+            status=Event.STATUS_UPCOMING,
+        )
+        self.news = NewsArticle.objects.create(
+            title="Adhibheshana 2026",
+            slug="adhibheshana-2026",
+            content="Convention report.",
+            status=NewsArticle.STATUS_PUBLISHED,
+            published_at=timezone.now(),
+        )
+        self.team = TeamMember.objects.create(
+            name="President Name",
+            position="President",
+            display_order=1,
+            is_active=True,
+        )
+        from memberships.models import MembershipApplication
+        self.application = MembershipApplication.objects.create(
+            full_name="Applicant Name",
+            date_of_birth=date(2002, 5, 10),
+            phone="9800000001",
+            email="applicant@example.com",
+            address="Biratnagar",
+            ward="11",
+            occupation="Student",
+            education="Bachelor",
+            areas_of_interest="Environment",
+            reason_for_joining="To serve community",
+        )
+        self.album = GalleryAlbum.objects.create(
+            title="Convention Album",
+            slug="convention-album",
+            date=date(2026, 8, 15),
+            is_published=True,
+        )
+        from contact.models import ContactMessage
+        self.contact = ContactMessage.objects.create(
+            name="Visitor",
+            email="visitor@example.com",
+            subject="General Inquiry",
+            message="Hello AYC team",
+            status=ContactMessage.STATUS_UNREAD,
+        )
+
+    def test_admin_dashboard_renders_with_brand_and_metrics(self):
+        response = self.client.get("/admin/")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("Alliance Yuwa Club", content)
+        self.assertIn("Unity, Leadership, and Service", content)
+        self.assertIn("Content Management", content)
+        self.assertIn("People &amp; Membership", content)
+        self.assertIn("Organization &amp; Identity", content)
+        self.assertIn("Communication &amp; Inquiries", content)
+
+    def test_all_model_changelists_render_successfully(self):
+        changelist_urls = [
+            "/admin/core/organization/",
+            "/admin/core/announcement/",
+            "/admin/activities/activitycategory/",
+            "/admin/activities/activity/",
+            "/admin/activities/activityimage/",
+            "/admin/events/event/",
+            "/admin/events/eventimage/",
+            "/admin/news/newsarticle/",
+            "/admin/team/teammember/",
+            "/admin/memberships/membershipapplication/",
+            "/admin/gallery/galleryalbum/",
+            "/admin/gallery/galleryimage/",
+            "/admin/contact/contactmessage/",
+        ]
+        for url in changelist_urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+
+    def test_important_changeforms_render_successfully(self):
+        changeform_urls = [
+            f"/admin/core/organization/{self.org.pk}/change/",
+            f"/admin/activities/activity/{self.activity.pk}/change/",
+            f"/admin/events/event/{self.event.pk}/change/",
+            f"/admin/memberships/membershipapplication/{self.application.pk}/change/",
+            f"/admin/gallery/galleryalbum/{self.album.pk}/change/",
+            f"/admin/contact/contactmessage/{self.contact.pk}/change/",
+        ]
+        for url in changeform_urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+
+    def test_contact_bulk_actions(self):
+        from contact.models import ContactMessage
+        post_data = {
+            "action": "mark_as_read",
+            "_selected_action": [str(self.contact.pk)],
+        }
+        response = self.client.post("/admin/contact/contactmessage/", post_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.contact.refresh_from_db()
+        self.assertEqual(self.contact.status, ContactMessage.STATUS_READ)

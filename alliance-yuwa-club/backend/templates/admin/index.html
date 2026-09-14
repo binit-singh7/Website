@@ -1,0 +1,302 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static admin_dashboard %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  {{ media.css }}
+{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content %}
+{% get_dashboard_metrics as metrics %}
+{% get_grouped_admin_apps app_list as grouped_apps %}
+{% get_recent_pending_memberships limit=5 as pending_apps %}
+{% get_recent_contact_messages limit=5 as recent_contacts %}
+
+<div class="ayc-dashboard">
+  <!-- Welcome Banner -->
+  <div class="ayc-welcome-banner">
+    <div class="ayc-welcome-content">
+      <h2>Welcome, {{ request.user.get_short_name|default:request.user.username }}</h2>
+      <div class="ayc-welcome-motto-pill">
+        <span>★</span> {{ metrics.org_motto }}
+      </div>
+      <div class="ayc-welcome-meta">
+        Alliance Yuwa Club Administration & Content Portal • Biratnagar, Nepal
+      </div>
+    </div>
+    <div class="ayc-welcome-actions">
+      {% if metrics.pending_memberships > 0 %}
+        <a href="{% url 'admin:memberships_membershipapplication_changelist' %}?status__exact=pending" class="ayc-btn-banner ayc-btn-banner-primary">
+          Review {{ metrics.pending_memberships }} Pending Application{{ metrics.pending_memberships|pluralize }}
+        </a>
+      {% endif %}
+      {% if metrics.unread_contacts > 0 %}
+        <a href="{% url 'admin:contact_contactmessage_changelist' %}?status__exact=unread" class="ayc-btn-banner ayc-btn-banner-secondary">
+          {{ metrics.unread_contacts }} Unread Message{{ metrics.unread_contacts|pluralize }}
+        </a>
+      {% endif %}
+      <a href="{% url 'admin:activities_activity_add' %}" class="ayc-btn-banner ayc-btn-banner-secondary">
+        + Add Activity
+      </a>
+      <a href="{% url 'admin:events_event_add' %}" class="ayc-btn-banner ayc-btn-banner-secondary">
+        + Add Event
+      </a>
+    </div>
+  </div>
+
+  <!-- Live KPI Metrics Grid -->
+  <div class="ayc-kpi-grid">
+    <a href="{% url 'admin:memberships_membershipapplication_changelist' %}" class="ayc-kpi-card {% if metrics.pending_memberships > 0 %}ayc-kpi-card--warning{% else %}ayc-kpi-card--primary{% endif %}">
+      <div class="ayc-kpi-header">
+        <span class="ayc-kpi-title">Memberships</span>
+        {% if metrics.pending_memberships > 0 %}
+          <span class="ayc-badge ayc-badge--warning">{{ metrics.pending_memberships }} Pending</span>
+        {% else %}
+          <span class="ayc-badge ayc-badge--success">Up to date</span>
+        {% endif %}
+      </div>
+      <div class="ayc-kpi-value">{{ metrics.total_memberships }}</div>
+      <div class="ayc-kpi-subtext">Total applications received</div>
+    </a>
+
+    <a href="{% url 'admin:contact_contactmessage_changelist' %}" class="ayc-kpi-card {% if metrics.unread_contacts > 0 %}ayc-kpi-card--danger{% else %}ayc-kpi-card--blue{% endif %}">
+      <div class="ayc-kpi-header">
+        <span class="ayc-kpi-title">Inquiries</span>
+        {% if metrics.unread_contacts > 0 %}
+          <span class="ayc-badge ayc-badge--danger">{{ metrics.unread_contacts }} New</span>
+        {% else %}
+          <span class="ayc-badge ayc-badge--neutral">All Read</span>
+        {% endif %}
+      </div>
+      <div class="ayc-kpi-value">{{ metrics.total_contacts }}</div>
+      <div class="ayc-kpi-subtext">Inbound contact messages</div>
+    </a>
+
+    <a href="{% url 'admin:activities_activity_changelist' %}" class="ayc-kpi-card ayc-kpi-card--primary">
+      <div class="ayc-kpi-header">
+        <span class="ayc-kpi-title">Activities</span>
+        <span class="ayc-badge ayc-badge--success">{{ metrics.published_activities }} Published</span>
+      </div>
+      <div class="ayc-kpi-value">{{ metrics.total_activities }}</div>
+      <div class="ayc-kpi-subtext">Programs & community archive</div>
+    </a>
+
+    <a href="{% url 'admin:events_event_changelist' %}" class="ayc-kpi-card ayc-kpi-card--blue">
+      <div class="ayc-kpi-header">
+        <span class="ayc-kpi-title">Events</span>
+        <span class="ayc-badge ayc-badge--info">{{ metrics.upcoming_events }} Upcoming</span>
+      </div>
+      <div class="ayc-kpi-value">{{ metrics.total_events }}</div>
+      <div class="ayc-kpi-subtext">Scheduled club events</div>
+    </a>
+
+    <a href="{% url 'admin:news_newsarticle_changelist' %}" class="ayc-kpi-card ayc-kpi-card--blue">
+      <div class="ayc-kpi-header">
+        <span class="ayc-kpi-title">News Articles</span>
+        <span class="ayc-badge ayc-badge--success">{{ metrics.published_news }} Live</span>
+      </div>
+      <div class="ayc-kpi-value">{{ metrics.total_news }}</div>
+      <div class="ayc-kpi-subtext">Published press & notices</div>
+    </a>
+
+    <a href="{% url 'admin:team_teammember_changelist' %}" class="ayc-kpi-card ayc-kpi-card--primary">
+      <div class="ayc-kpi-header">
+        <span class="ayc-kpi-title">Leadership</span>
+        <span class="ayc-badge ayc-badge--success">{{ metrics.active_team_members }} Active</span>
+      </div>
+      <div class="ayc-kpi-value">{{ metrics.active_team_members }}</div>
+      <div class="ayc-kpi-subtext">Executive committee members</div>
+    </a>
+
+    <a href="{% url 'admin:gallery_galleryalbum_changelist' %}" class="ayc-kpi-card ayc-kpi-card--blue">
+      <div class="ayc-kpi-header">
+        <span class="ayc-kpi-title">Photo Gallery</span>
+        <span class="ayc-badge ayc-badge--neutral">{{ metrics.total_gallery_images }} Photos</span>
+      </div>
+      <div class="ayc-kpi-value">{{ metrics.total_albums }}</div>
+      <div class="ayc-kpi-subtext">Published photo albums</div>
+    </a>
+  </div>
+
+  <!-- Dashboard Columns: Conceptual Navigation + Triage Stream -->
+  <div class="ayc-dashboard-columns">
+    <!-- Left Column: Grouped Sections -->
+    <div class="ayc-groups-list">
+      {% for group in grouped_apps %}
+        <div class="ayc-group-card">
+          <div class="ayc-group-header">
+            <div>
+              <h3 class="ayc-group-title">{{ group.name }}</h3>
+              <div class="ayc-group-desc">{{ group.description }}</div>
+            </div>
+          </div>
+          <table class="ayc-model-table">
+            <tbody>
+              {% for model in group.items %}
+                <tr class="ayc-model-row">
+                  <td class="ayc-model-cell-name">
+                    {% if model.admin_url %}
+                      <a href="{{ model.admin_url }}">
+                        {{ model.name }}
+                        {% if model.group_badge %}
+                          <span class="ayc-model-tag">{{ model.group_badge }}</span>
+                        {% endif %}
+                      </a>
+                    {% else %}
+                      <span>{{ model.name }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="ayc-model-cell-actions">
+                    {% if model.add_url %}
+                      <a href="{{ model.add_url }}" class="ayc-btn-action-add" title="Add new {{ model.name }}">+ Add</a>
+                    {% endif %}
+                    {% if model.admin_url %}
+                      <a href="{{ model.admin_url }}" class="ayc-btn-action-view">View List →</a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% empty %}
+        <div class="ayc-card">
+          <div class="ayc-empty-state">
+            No administration models are currently accessible for your user account.
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Right Column: Triage & Recent Submissions -->
+    <div class="ayc-triage-panel">
+      <!-- Pending Applications Triage -->
+      <div class="ayc-card">
+        <div class="ayc-card-header">
+          <h3>👥 Pending Applications</h3>
+          <a href="{% url 'admin:memberships_membershipapplication_changelist' %}?status__exact=pending" class="ayc-badge ayc-badge--warning">
+            View All ({{ metrics.pending_memberships }})
+          </a>
+        </div>
+        {% if pending_apps %}
+          <ul class="ayc-triage-list">
+            {% for app in pending_apps %}
+              <li class="ayc-triage-item">
+                <div class="ayc-triage-info">
+                  <span class="ayc-triage-name">{{ app.full_name }}</span>
+                  <span class="ayc-triage-meta">{{ app.phone }} • Ward {{ app.ward }}</span>
+                </div>
+                <a href="{% url 'admin:memberships_membershipapplication_change' app.pk %}" class="ayc-btn-action-add">
+                  Review
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="ayc-empty-state">
+            ✓ No pending applications awaiting review.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Recent Contact Messages -->
+      <div class="ayc-card">
+        <div class="ayc-card-header">
+          <h3>✉️ Recent Inquiries</h3>
+          <a href="{% url 'admin:contact_contactmessage_changelist' %}" class="ayc-badge ayc-badge--neutral">
+            Inbox ({{ metrics.total_contacts }})
+          </a>
+        </div>
+        {% if recent_contacts %}
+          <ul class="ayc-triage-list">
+            {% for contact in recent_contacts %}
+              <li class="ayc-triage-item">
+                <div class="ayc-triage-info">
+                  <span class="ayc-triage-name">{{ contact.subject|truncatechars:28 }}</span>
+                  <span class="ayc-triage-meta">From {{ contact.name }}</span>
+                </div>
+                <div>
+                  {% if contact.status == 'unread' %}
+                    <a href="{% url 'admin:contact_contactmessage_change' contact.pk %}" class="ayc-badge ayc-badge--danger">Unread</a>
+                  {% elif contact.status == 'replied' %}
+                    <a href="{% url 'admin:contact_contactmessage_change' contact.pk %}" class="ayc-badge ayc-badge--info">Replied</a>
+                  {% else %}
+                    <a href="{% url 'admin:contact_contactmessage_change' contact.pk %}" class="ayc-badge ayc-badge--neutral">{{ contact.status|title }}</a>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="ayc-empty-state">
+            No contact messages received yet.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Official Club Profile Summary -->
+      <div class="ayc-card">
+        <div class="ayc-card-header">
+          <h3>🏛️ Club Identity</h3>
+          <a href="{% url 'admin:core_organization_changelist' %}" class="ayc-badge ayc-badge--success">Edit Profile</a>
+        </div>
+        <div style="padding: 16px 18px; font-size: 13px; line-height: 1.5; color: var(--ayc-text);">
+          <div style="font-weight: 700; color: var(--ayc-primary-dark); margin-bottom: 4px;">
+            Alliance Yuwa Club (AYC)
+          </div>
+          <div style="color: var(--ayc-text-muted); font-size: 12px; margin-bottom: 10px;">
+            Biratnagar, Koshi Province, Nepal
+          </div>
+          <div style="background: var(--ayc-bg); border: 1px solid var(--ayc-border); border-radius: 6px; padding: 8px 12px; margin-bottom: 10px;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--ayc-text-muted); text-transform: uppercase;">Official Motto</div>
+            <div style="font-weight: 600; color: var(--ayc-text); margin-top: 2px;">Unity, Leadership, and Service</div>
+          </div>
+          {% if metrics.organization %}
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ayc-text-muted);">
+              {% if metrics.organization.phone %}<div>📞 {{ metrics.organization.phone }}</div>{% endif %}
+              {% if metrics.organization.email %}<div>✉️ {{ metrics.organization.email }}</div>{% endif %}
+              {% if metrics.organization.address %}<div>📍 {{ metrics.organization.address }}</div>{% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related" style="margin-top: 24px;">
+  <div class="module" id="recent-actions-module">
+    <h2>{% translate 'Recent actions' %}</h2>
+    <h3>{% translate 'My actions' %}</h3>
+    {% load log %}
+    {% get_admin_log 10 as admin_log for_user user %}
+    {% if not admin_log %}
+      <p>{% translate 'None available' %}</p>
+    {% else %}
+      <ul class="actionlist">
+      {% for entry in admin_log %}
+        <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+          {% if entry.is_deletion or not entry.get_admin_url %}
+            {{ entry.object_repr }}
+          {% else %}
+            <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+          {% endif %}
+          <br>
+          {% if entry.content_type %}
+            <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
+          {% else %}
+            <span class="mini quiet">{% translate 'Unknown content' %}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

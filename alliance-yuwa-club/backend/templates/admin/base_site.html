@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:"Alliance Yuwa Club Admin" }}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/ayc_admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+<div id="branding">
+  <h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+      <span class="ayc-header-logo-badge">AYC</span>
+      <span class="ayc-header-title-wrap">
+        <span class="ayc-header-title">{{ site_header|default:"Alliance Yuwa Club" }}</span>
+        <span class="ayc-header-motto">Unity, Leadership, and Service</span>
+      </span>
+    </a>
+  </h1>
+</div>
+{% endblock %}
+
+{% block userlinks %}
+  {% if site_url %}
+    <a href="{{ site_url }}" target="_blank" rel="noopener noreferrer">↗ View Public Site</a>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

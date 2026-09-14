@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.utils import timezone
+from django.utils.html import format_html
 
 from .emails import (
     send_application_approved_email,
@@ -12,18 +13,86 @@ from .models import MembershipApplication
 class MembershipApplicationAdmin(admin.ModelAdmin):
     list_display = (
         "full_name",
-        "email",
         "phone",
-        "status",
+        "email",
+        "ward",
+        "status_badge",
         "submitted_at",
         "reviewed_at",
         "reviewed_by",
     )
-    list_filter = ("status",)
-    search_fields = ("full_name", "email", "phone", "ward")
+    list_filter = ("status", "ward")
+    search_fields = ("full_name", "email", "phone", "ward", "occupation")
     ordering = ("-submitted_at",)
     readonly_fields = ("submitted_at", "reviewed_at", "reviewed_by")
     actions = ("approve_applications", "reject_applications")
+
+    fieldsets = (
+        (
+            "Applicant Profile",
+            {
+                "fields": (
+                    "full_name",
+                    "date_of_birth",
+                    "phone",
+                    "email",
+                ),
+            },
+        ),
+        (
+            "Residence & Background",
+            {
+                "fields": (
+                    "address",
+                    "ward",
+                    "occupation",
+                    "education",
+                ),
+            },
+        ),
+        (
+            "Application Statement",
+            {
+                "fields": (
+                    "areas_of_interest",
+                    "reason_for_joining",
+                ),
+            },
+        ),
+        (
+            "Administrative Review & Decision",
+            {
+                "fields": (
+                    "status",
+                    "reviewed_by",
+                    "reviewed_at",
+                    "admin_notes",
+                ),
+                "description": "Authorized staff review. Use actions to approve/reject with applicant email notification.",
+            },
+        ),
+        (
+            "Submission Timestamp",
+            {
+                "fields": ("submitted_at",),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    @admin.display(description="Status", ordering="status")
+    def status_badge(self, obj):
+        badge_classes = {
+            MembershipApplication.STATUS_PENDING: "ayc-badge--warning",
+            MembershipApplication.STATUS_APPROVED: "ayc-badge--success",
+            MembershipApplication.STATUS_REJECTED: "ayc-badge--danger",
+        }
+        css_class = badge_classes.get(obj.status, "ayc-badge--neutral")
+        return format_html(
+            '<span class="ayc-badge {}"><span class="ayc-badge-dot"></span>{}</span>',
+            css_class,
+            obj.get_status_display(),
+        )
 
     @admin.action(description="Approve selected membership applications")
     def approve_applications(self, request, queryset):

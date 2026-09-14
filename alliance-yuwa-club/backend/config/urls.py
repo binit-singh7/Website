@@ -23,6 +23,10 @@ from django.urls import include, path
 from core.sitemaps import sitemap_view
 from core.views import health_check
 
+admin.site.site_header = "Alliance Yuwa Club Administration"
+admin.site.site_title = "AYC Admin Portal"
+admin.site.index_title = "Club Management & Overview"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", health_check, name="health-check"),
