@@ -24,7 +24,7 @@
 
 {% block userlinks %}
 {% if site_url %}
-<a href="http://www.allianceyuwaclub.org.np" target="_blank" rel="noopener noreferrer">↗ View Public Site</a>
+<a href="{{ site_url }}" target="_blank" rel="noopener noreferrer">↗ View Public Site</a>
 {% endif %}
 {{ block.super }}
 {% endblock %}

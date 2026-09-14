@@ -26,6 +26,8 @@ from core.views import health_check
 admin.site.site_header = "Alliance Yuwa Club Administration"
 admin.site.site_title = "AYC Admin Portal"
 admin.site.index_title = "Club Management & Overview"
+# Point the admin "View site" link at the public frontend, not the API origin.
+admin.site.site_url = settings.FRONTEND_BASE_URL
 
 urlpatterns = [
     path("admin/", admin.site.urls),
