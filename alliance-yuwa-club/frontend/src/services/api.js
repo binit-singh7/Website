@@ -79,6 +79,27 @@ export function fetchGalleryAlbum(slug) {
   return api.get(`/gallery/albums/${slug}/`).then((response) => response.data)
 }
 
+/**
+ * Fetch published Activity records shaped as virtual gallery albums.
+ * These are derived dynamically from Activity data — no separate Gallery
+ * records exist for them. Each result includes source: "activity" and a
+ * slug prefixed with "activity--".
+ */
+export function fetchActivityGalleryAlbums({ page, pageSize } = {}) {
+  return requestCollection('/gallery/activity-images/', {
+    page: page || undefined,
+    page_size: pageSize || undefined,
+  })
+}
+
+/**
+ * Fetch a single Activity shaped as a gallery album detail.
+ * Pass the plain Activity slug (without the "activity--" prefix).
+ */
+export function fetchActivityGalleryAlbum(slug) {
+  return api.get(`/gallery/activity-images/${slug}/`).then((response) => response.data)
+}
+
 export function mediaUrl(path) {
   return path ? new URL(path, api.defaults.baseURL).href : null
 }
