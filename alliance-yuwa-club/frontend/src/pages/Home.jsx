@@ -15,6 +15,22 @@ const impactMetrics = [
   ['Biratnagar', 'Sunsari Saptari & Beyond'],
 ]
 
+async function fetchFeaturedActivities() {
+  const activities = []
+  let page = 1
+
+  while (true) {
+    const response = await fetchActivities({ featured: true, page, pageSize: 100 })
+
+    if (Array.isArray(response)) return response
+
+    activities.push(...(Array.isArray(response?.results) ? response.results : []))
+
+    if (!response?.next) return activities
+    page += 1
+  }
+}
+
 function Home() {
   const shouldReduceMotion = useReducedMotion()
   const [featuredActivities, setFeaturedActivities] = useState(null)
@@ -29,10 +45,10 @@ function Home() {
   useEffect(() => {
     let isCurrent = true
 
-    fetchActivities({ featured: true, pageSize: 3 })
-      .then((response) => {
+    fetchFeaturedActivities()
+      .then((activities) => {
         if (!isCurrent) return
-        setFeaturedActivities(Array.isArray(response) ? response : response.results || [])
+        setFeaturedActivities(activities)
         setFeaturedActivitiesError(false)
       })
       .catch(() => {
