@@ -27,10 +27,11 @@ export function fetchActivity(slug) {
   return api.get(`/activities/${slug}/`).then((response) => response.data)
 }
 
-export function fetchEvents({ status, year, page, pageSize } = {}) {
+export function fetchEvents({ status, year, latest, page, pageSize } = {}) {
   return requestCollection('/events/', {
     status: status || undefined,
     year: year || undefined,
+    latest: latest === true ? true : undefined,
     page: page || undefined,
     page_size: pageSize || undefined,
   })

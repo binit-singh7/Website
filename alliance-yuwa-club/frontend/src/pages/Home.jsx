@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react'
 import heroCommunity from '../assets/images/hero-community.jpg'
 import Button from '../components/Button'
 import Seo from '../components/Seo'
-import { fetchActivities, mediaUrl } from '../services/api'
-import { excerpt, formatDate } from './contentUtils'
+import { fetchActivities, fetchEvents, mediaUrl } from '../services/api'
+import { collectionResult, excerpt, formatDate, formatDateTime } from './contentUtils'
 import './Home.css'
 
 const impactMetrics = [
@@ -35,6 +35,8 @@ function Home() {
   const shouldReduceMotion = useReducedMotion()
   const [featuredActivities, setFeaturedActivities] = useState(null)
   const [featuredActivitiesError, setFeaturedActivitiesError] = useState(false)
+  const [upcomingEvent, setUpcomingEvent] = useState(undefined)
+  const [upcomingEventError, setUpcomingEventError] = useState(false)
   const reveal = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 24 },
     visible: { opacity: 1, y: 0 },
@@ -55,6 +57,24 @@ function Home() {
         if (!isCurrent) return
         setFeaturedActivities([])
         setFeaturedActivitiesError(true)
+      })
+
+    return () => { isCurrent = false }
+  }, [])
+
+  useEffect(() => {
+    let isCurrent = true
+
+    fetchEvents({ status: 'upcoming', latest: true, pageSize: 1 })
+      .then((response) => {
+        if (!isCurrent) return
+        setUpcomingEvent(collectionResult(response).results[0] || null)
+        setUpcomingEventError(false)
+      })
+      .catch(() => {
+        if (!isCurrent) return
+        setUpcomingEvent(null)
+        setUpcomingEventError(true)
       })
 
     return () => { isCurrent = false }
@@ -171,6 +191,58 @@ function Home() {
                 </Link>
               </motion.article>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section className="home-featured page-container" aria-labelledby="upcoming-event-title">
+        <motion.header
+          className="home-section-heading"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+          variants={reveal}
+          transition={transition}
+        >
+          <p className="home-kicker">Upcoming event</p>
+          <h2 id="upcoming-event-title">Join us at our next event.</h2>
+        </motion.header>
+        {upcomingEvent === undefined ? (
+          <p className="home-featured__message" role="status" aria-live="polite">Loading upcoming event…</p>
+        ) : upcomingEventError ? (
+          <p className="home-featured__message" role="alert">Upcoming events are unavailable right now.</p>
+        ) : upcomingEvent === null ? (
+          <p className="home-featured__message">No upcoming events are available at the moment.</p>
+        ) : (
+          <div className="home-featured__grid">
+            <motion.article
+              className="activity-feature activity-feature--blue"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.22 }}
+              variants={reveal}
+              transition={transition}
+              whileHover={hover}
+            >
+              <Link className="activity-feature__link" to={`/events/${upcomingEvent.slug}`}>
+                <div className="activity-feature__image">
+                  {upcomingEvent.cover_image ? (
+                    <img src={mediaUrl(upcomingEvent.cover_image)} alt={`${upcomingEvent.title} cover image`} loading="lazy" />
+                  ) : (
+                    <div className="activity-feature__image--empty" role="img" aria-label={`${upcomingEvent.title} photograph unavailable`}>
+                      <span>Event photograph</span>
+                    </div>
+                  )}
+                </div>
+                <div className="activity-feature__body">
+                  <p className="activity-feature__category">Upcoming event</p>
+                  <p className="activity-feature__meta">{formatDateTime(upcomingEvent.start_datetime)}{upcomingEvent.location && <> <span aria-hidden="true">·</span> {upcomingEvent.location}</>}</p>
+                  <h3>{upcomingEvent.title}</h3>
+                  <p>{excerpt(upcomingEvent.description)}</p>
+                  <span className="activity-feature__cta">View event <span aria-hidden="true">→</span></span>
+                </div>
+              </Link>
+            </motion.article>
           </div>
         )}
       </section>

@@ -21,6 +21,8 @@ class EventListView(generics.ListAPIView):
             queryset = queryset.filter(start_datetime__year=year)
         if featured in {"true", "false"}:
             queryset = queryset.filter(featured=featured == "true")
+        if self.request.query_params.get("latest") == "true":
+            return queryset.order_by("-created_at", "-id")
         if status in {Event.STATUS_COMPLETED, Event.STATUS_CANCELLED}:
             return queryset.order_by("-start_datetime")
         return queryset.order_by("start_datetime")

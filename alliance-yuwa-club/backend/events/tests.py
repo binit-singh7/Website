@@ -63,6 +63,25 @@ class EventApiTests(APITestCase):
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["slug"], self.upcoming.slug)
 
+    def test_list_returns_latest_record_when_requested(self):
+        latest = Event.objects.create(
+            title="Latest Upcoming Event",
+            slug="latest-upcoming-event",
+            description="Visible",
+            start_datetime=datetime(
+                2026, 11, 15, 10, 0, tzinfo=timezone.get_current_timezone()
+            ),
+            status=Event.STATUS_UPCOMING,
+        )
+
+        response = self.client.get(
+            "/api/events/?status=upcoming&latest=true&page_size=1"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(response.data["results"][0]["slug"], latest.slug)
+
     def test_detail_includes_images_and_hides_drafts(self):
         EventImage.objects.create(event=self.upcoming, image="event.jpg")
 
