@@ -1,9 +1,30 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
 import logo from '../assets/logo.svg'
+import { fetchOrganization } from '../services/api'
 import './components.css'
 
 function Footer() {
+  const [organization, setOrganization] = useState(null)
+
+  useEffect(() => {
+    let isCurrent = true
+
+    fetchOrganization()
+      .then((data) => isCurrent && setOrganization(data))
+      .catch(() => isCurrent && setOrganization({}))
+
+    return () => { isCurrent = false }
+  }, [])
+
+  const socialLinks = [
+    ['Facebook', organization?.facebook_url],
+    ['Instagram', organization?.instagram_url],
+    ['YouTube', organization?.youtube_url],
+    ['TikTok', organization?.tiktok_url],
+  ].filter(([, url]) => url)
+
   return (
     <footer className="footer">
       <div className="page-container footer__grid">
@@ -21,9 +42,18 @@ function Footer() {
           <p>Biratnagar, Nepal</p>
           <Link to="/contact">Contact the club</Link>
         </div>
-        <div className="footer__social" aria-label="Social links">
-          <p>Official social links will be added from verified organization data.</p>
-        </div>
+        {socialLinks.length > 0 && (
+          <div className="footer__social">
+            <p>Follow us</p>
+            <nav aria-label="Social links">
+              {socialLinks.map(([name, url]) => (
+                <a key={name} href={url} target="_blank" rel="noreferrer">
+                  {name}<span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
       <div className="page-container footer__bottom">© {new Date().getFullYear()} Alliance Yuwa Club</div>
     </footer>
